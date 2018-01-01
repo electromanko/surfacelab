@@ -11,6 +11,14 @@
 CONFIG_FILE="/etc/sulad.conf"
 PIDFILES="/var/run/sulad.*"
 cmd="sulad"
+GPIO=71
+
+gpio_check(){
+    if  [ ! -e /sys/class/gpio/gpio$GPIO/value ]; then
+      echo $GPIO > /sys/class/gpio/export
+      echo out > /sys/class/gpio/gpio$GPIO/direction
+    fi
+}
 
 start() {
     echo 'Starting service…' >&2
@@ -20,11 +28,21 @@ start() {
         echo "$var --pid-file /var/run/sulad" | xargs sulad
     done
     echo 'Service started' >&2
+    
+    gpio_check
+    
+    sh -c "echo 1 > /sys/class/gpio/gpio$GPIO/value"
+    
 }
 
 stop() {
   echo $(cat $PIDFILES) | xargs kill
   echo 'Service stopped' >&2
+  
+  gpio_check
+    
+  sh -c "echo 0 > /sys/class/gpio/gpio$GPIO/value"
+
 }
 
 case "$1" in
@@ -34,8 +52,9 @@ case "$1" in
   stop)
     stop
     ;;
-  retart)
+  restart)
     stop
+    sleep 3
     start
     ;;
   *)

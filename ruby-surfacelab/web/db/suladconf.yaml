@@ -7,7 +7,7 @@ port:
   data_bits: 8
   parity: n
   stop_bits: 1
-  delay_us: 21
+  delay_us: 0
   delay_segment: 0
   tx_led: 86
   rx_led: 88

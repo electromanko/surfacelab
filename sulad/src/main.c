@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <string.h>
@@ -14,6 +15,7 @@
 #include <syslog.h>
 #include <getopt.h>
 #include <fcntl.h>
+#include <sys/socket.h>
 
 /**
  * TCP Uses 2 types of sockets, the connection socket and the listen socket.
@@ -21,13 +23,20 @@
  * */
 volatile sig_atomic_t flag = 0;
 int __listen_sock=0;
-#define UART_RX_BUFER_SIZE 65536
-#define TCP_RX_BUFER_SIZE 65536
-char __TCPbuffer[TCP_RX_BUFER_SIZE];
-char __UARTbuffer[UART_RX_BUFER_SIZE];
+#define UART_RX_BUFFER_SIZE 65536
+#define TCP_RX_BUFFER_SIZE 65536
+#define IPADDR_CHAR_BUFFER_SIZE 20
+char __TCPbuffer[TCP_RX_BUFFER_SIZE];
+char __UARTbuffer[UART_RX_BUFFER_SIZE];
+
+char __ipaddr_string_buf[IPADDR_CHAR_BUFFER_SIZE];
 int sock=0;
 int __fd_pid=-1;
 int __child=0;
+
+#define BLINK_RX_FLAG (1<<0)
+#define BLINK_TX_FLAG (1<<1)
+int __blink_flag=0;
 
 static int gpio_permit_out[] = {86,88,87,89,70,71,110,113};
 
@@ -65,7 +74,7 @@ void display_usage();
 int set_option(struct settings_t *settings, int argc, char *argv[]);
 
 void scallback(int sig){
-    syslog (LOG_NOTICE, "Close thread");
+    syslog (LOG_NOTICE, "close thread");
     delete_pid_file(__fd_pid);
     
     if (__child==0) {
@@ -92,7 +101,7 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, scallback);
 	    
 	set_option(&settings, argc, argv);
-	syslog (LOG_NOTICE, "SuLa UART <=> TCP daemon started.");
+	syslog (LOG_NOTICE, "UART(%s) <=> TCP(%d) daemon started.", settings.uart_device, settings.tcp_port);
 	if (argc<=1){
 	    syslog (LOG_ERR, "less argc arguments");
 	    exit(-1);
@@ -129,7 +138,7 @@ int main(int argc, char *argv[]) {
 	//int listen_sock;
 	if ((__listen_sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
 		syslog (LOG_ERR, "could not create listen socket");
-		return 1;
+		exit(-1);
 	}
     
     int enable = 1;
@@ -141,14 +150,14 @@ int main(int argc, char *argv[]) {
 	if ((bind(__listen_sock, (struct sockaddr *)&server_address,
 	          sizeof(server_address))) < 0) {
 		syslog (LOG_ERR, "could not bind socket %d", settings.tcp_port);
-		return 1;
+		exit(-1);
 	}
 
 	int wait_size = 16;  // maximum number of waiting clients, after which
 	                     // dropping begins
 	if (listen(__listen_sock, wait_size) < 0) {
 		syslog (LOG_ERR, "could not open socket for listening");
-		return 1;
+		exit(-1);
 	}
 
 	// socket address used to store client address
@@ -165,19 +174,27 @@ int main(int argc, char *argv[]) {
 		if ((sock = accept(__listen_sock, (struct sockaddr *)&client_address,
 		                &client_address_len)) < 0) {
 			syslog (LOG_ERR, "could not open a socket to accept data");
-			return 1;
+			exit(-1);
 		}
         __child=0;
 		int n = 0;
 
 		/*printf("client connected with ip address: %s\n",
 		       inet_ntoa(client_address.sin_addr));*/
-		syslog (LOG_NOTICE, ("client connected with ip address: %s",
-		                                    inet_ntoa(client_address.sin_addr)));
+		if (inet_ntop(AF_INET, (void *) &(client_address.sin_addr),
+                      __ipaddr_string_buf, sizeof (__ipaddr_string_buf))!=NULL){
+           syslog (LOG_NOTICE, "client connected with ip: %s", __ipaddr_string_buf);
+        } else {
+            syslog (LOG_ERR, "client connected, inet_ntop() error");
+        }
+		
+		/*syslog (LOG_NOTICE, ("client connected with ip: %s",
+		                                    inet_ntoa(client_address.sin_addr)));*/
+		                                    
 		if(settings.loop=='l'){
 		    // Local loop
 		    __child=0;
-    	    while ((n = recv(sock, __TCPbuffer, TCP_RX_BUFER_SIZE, 0)) > 0) {
+    	    while ((n = recv(sock, __TCPbuffer, TCP_RX_BUFFER_SIZE, 0)) > 0) {
 				event_tx_led(&settings);
                 if (send(sock, __TCPbuffer, n, 0)<0){
     			    syslog (LOG_ERR, "tcp send error: %s", strerror(errno));
@@ -197,7 +214,7 @@ int main(int argc, char *argv[]) {
     					    syslog (LOG_ERR, "child not create pid file %d",pid);
     					};
             			while (true) {
-    						if ((n = read(uart_fd, __UARTbuffer, UART_RX_BUFER_SIZE)) <= 0){
+    						if ((n = read(uart_fd, __UARTbuffer, UART_RX_BUFFER_SIZE)) <= 0){
     						    syslog (LOG_ERR, "uart receive error: %s", strerror(errno));
     						}
     						if (send(sock, __UARTbuffer, n, 0)<n){
@@ -208,21 +225,9 @@ int main(int argc, char *argv[]) {
     			default: //printf("Parent here!!!\n");
     					// keep running as long as the client keeps the connection open
                         __child=0;
-    					while ((n = recv(sock, __TCPbuffer, TCP_RX_BUFER_SIZE, 0)) > 0) {
-    					    
-    						/*if (write(uart_fd,__TCPbuffer,n)<0){
-    							syslog (LOG_ERR, "uart write error: %s", strerror(errno));
-    						} else event_tx_led(&settings);*/
-    						int i=0;
-    						/*while (i<n){
-    						    usleep(10);
-    						    if (write(uart_fd,__TCPbuffer+i,1)<0){
-    							    syslog (LOG_ERR, "uart write error: %s", strerror(errno));
-    						    } else event_tx_led(&settings);
-    						    i++;
-    						}*/
-    						//int segment_delay_us;       /* параметр --segment-delay */
-                            //int segment_delay_size;     /* параметр --segment-delay-size */
+    					while ((n = recv(sock, __TCPbuffer, TCP_RX_BUFFER_SIZE, 0)) > 0) {
+    					    int i=0;
+
                             int write_seg_size=0;
     						if (settings.segment_delay_us>0)
     						    while (i<n){
@@ -484,19 +489,8 @@ int gpio_out_init(int gpio){
     }
     lseek(ioval,0,SEEK_SET);
 
-    /*while(1)
-    {
-        fprintf(ioval,"%d",1);
-        fflush(ioval);
-        sleep(1);
-        fprintf(ioval,"%d",0);
-        fflush(ioval);
-        sleep(1);
-    }
-    */
     close(io);
     close(iodir);
-    //fclose(ioval);
     return ioval;
 }
 
@@ -521,7 +515,6 @@ int create_pid_file(const char *pid_file, int pid){
     }
     dprintf(fd_pid_file,"%d\n", pid);
     return fd_pid_file;
-    //strncpy(buf,settings->pid_file,sizeof(buf)-1);
 }
 
 int delete_pid_file(int pid){
@@ -530,8 +523,7 @@ int delete_pid_file(int pid){
     snprintf(str, sizeof(str)-1, "/proc/self/fd/%d",pid);
     int n = readlink(str, path, sizeof(path)-1);
     path[n]='\0';
-    syslog (LOG_NOTICE, "Unlink");
-    syslog (LOG_NOTICE, "Unlink: %s", path);
+    syslog (LOG_NOTICE, "unlink: %s", path);
     return unlink(path);
 }
 //

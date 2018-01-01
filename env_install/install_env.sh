@@ -1,6 +1,9 @@
 #!/bin/bash
 
 #/sbin/route add default gw 192.168.7.1
+
+export https_proxy='https://proxy.int.kpfu.ru:8080/'
+export http_proxy='http://proxy.int.kpfu.ru:8080/'
 sudo apt-get update && sudo apt-get upgrade &&
 sudo apt-get install curl lighttpd mc minicom gawk zlib1g-dev libyaml-dev libsqlite3-dev sqlite3 libgmp-dev libgdbm-dev libffi-dev libgmp-dev libreadline6-dev libssl-dev gawk zlib1g-dev libyaml-dev libsqlite3-dev sqlite3 libgmp-dev libgdbm-dev libffi-dev libgmp-dev libreadline6-dev libssl-dev
 #Install RVM stable with ruby:
@@ -14,3 +17,6 @@ rvmsudo gem install ../beaglebone/beaglebone-2.2.6.gem
 bundle install ../ruby-surfacelab/Gemfile
 bundle install ../ruby-surfacelab/web/Gemfile
 rvm alias create surfacelab ruby-2.4.1@surfacelab
+gem sources --list
+gem sources --add http://rubygems.org
+gem sources --remove https://rubygems.org/
