@@ -20,11 +20,17 @@ start() {
         echo "$var --pid-file /var/run/sulad" | xargs sulad
     done
     echo 'Service started' >&2
+    if [ -d /sys/class/gpio/gpio71 ]; then
+      sh -c 'echo 1 > /sys/class/gpio/gpio71/value';
+    fi
 }
 
 stop() {
   echo $(cat $PIDFILES) | xargs kill
   echo 'Service stopped' >&2
+  if [ -d /sys/class/gpio/gpio71 ]; then
+    sh -c 'echo 0 > /sys/class/gpio/gpio71/value';
+  fi
 }
 
 case "$1" in
@@ -36,6 +42,7 @@ case "$1" in
     ;;
   retart)
     stop
+    sleep 3
     start
     ;;
   *)
