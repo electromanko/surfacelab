@@ -9,8 +9,8 @@ port:
   stop_bits: 1
   delay_us: 0
   delay_segment: 0
-  tx_led: 86
-  rx_led: 88
+  tx_led: 
+  rx_led: 
   gpio_high: []
   gpio_low: []
 - name: Data port
@@ -37,8 +37,8 @@ port:
   stop_bits: 1
   delay_us: 0
   delay_segment: 0
-  tx_led: 70
-  rx_led: 71
+  tx_led: 71
+  rx_led: 70
   gpio_high: []
   gpio_low: []
 - name: Extern port
@@ -50,7 +50,7 @@ port:
   stop_bits: 1
   delay_us: 0
   delay_segment: 0
-  tx_led: 70
-  rx_led: 71
+  tx_led: 
+  rx_led: 
   gpio_high: []
   gpio_low: []

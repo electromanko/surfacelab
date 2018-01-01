@@ -5,7 +5,7 @@ CONFIGDIR = /etc
 IDIR =include
 SDIR =src
 CC=gcc
-CFLAGS=-I$(IDIR) -O2
+CFLAGS=-I$(IDIR) -O2 -lpthread
 
 ODIR=obj
 LDIR =lib

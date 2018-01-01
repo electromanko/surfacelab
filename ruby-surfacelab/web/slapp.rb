@@ -46,8 +46,8 @@ daemon_parameter={
   :data_bits => [5,6,7,8],
   :parity => ['n', 'o', 'e'],
   :stop_bits => [1,2],
-  :leds => [0,86,88,87,89,70,71],
-  :leds_label => {0=>'none',86=>'1',88=>'2',87=>'3',89=>'4',70=>'5',71=>'6'}
+  :leds => [0,71,70,86,88,87,89],
+  :leds_label => {0=>'none',71=>'1',70=>'2',86=>'3',88=>'4',87=>'5',89=>'6'}
 }
 
 password_salt = BCrypt::Engine.generate_salt
@@ -160,9 +160,9 @@ post "/daemon/:num" do
       SLDConfig.save_config( sldconfig,DAEMON_CONFIG_FILE_SLD, :SLD)
     end
     #system("cp #{DAEMON_CONFIG_FILE_SLD} /etc/sulad.conf")
-    sleep 3
+    sleep 1
     system("/etc/init.d/sulad stop")
-    sleep 10
+    sleep 2
     system("/etc/init.d/sulad start")
     redirect "/daemon"
   else 

@@ -16,6 +16,7 @@
 #include <getopt.h>
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <pthread.h>
 
 /**
  * TCP Uses 2 types of sockets, the connection socket and the listen socket.
@@ -36,7 +37,9 @@ int __child=0;
 
 #define BLINK_RX_FLAG (1<<0)
 #define BLINK_TX_FLAG (1<<1)
-int __blink_flag=0;
+unsigned int __blink_flag=0;
+unsigned int __blink_run=0;
+
 
 static int gpio_permit_out[] = {86,88,87,89,70,71,110,113};
 
@@ -76,7 +79,7 @@ int set_option(struct settings_t *settings, int argc, char *argv[]);
 void scallback(int sig){
     syslog (LOG_NOTICE, "close thread");
     delete_pid_file(__fd_pid);
-    
+    __blink_run=0;
     if (__child==0) {
         close(sock);
         close(__listen_sock);
@@ -85,11 +88,36 @@ void scallback(int sig){
     exit(0);
 }
 
-#define SEND_SEGMENT_SIZE 64
-#define SEND_SEGMENT_DELAY_US 1
-//1000
+void *thread_blink_led(void *arg){
+    struct settings_t *set;
+    set=(struct settings_t *) arg;
+    int rx_on=0;
+    int tx_on=0;
+    while ( __blink_run){
+        if (__blink_flag & BLINK_TX_FLAG){
+            if (set->fd_led_tx>0) gpio_out_write(set->fd_led_tx, 1);
+            __blink_flag &= ~(BLINK_TX_FLAG);
+            tx_on=1;
+        }
+        if (__blink_flag & BLINK_RX_FLAG){
+            if (set->fd_led_rx>0) gpio_out_write(set->fd_led_rx, 1);
+            __blink_flag &= ~(BLINK_RX_FLAG);
+            rx_on=1;
+        }
+        usleep(40000);
+        if (set->fd_led_tx>0 && tx_on==1) {
+            gpio_out_write(set->fd_led_tx, 0);
+            tx_on=0;
+        }
+        if (set->fd_led_rx>0 && rx_on==1)  {
+            gpio_out_write(set->fd_led_rx, 0);
+            rx_on=0;
+        }
+    }
+}
 
 int main(int argc, char *argv[]) {
+    pthread_t thid;
     int baud_base=0;
     int custom_divisor=0;
 	pid_t pid;
@@ -106,8 +134,7 @@ int main(int argc, char *argv[]) {
 	    syslog (LOG_ERR, "less argc arguments");
 	    exit(-1);
 	}
-
-    
+	
     if ((uart_fd=uart_init(settings.uart_device, 
     						settings.uart_speed,
     						settings.uart_data_bits,
@@ -210,6 +237,13 @@ int main(int argc, char *argv[]) {
             			 exit(1); /*выход из родительского процесса*/
             	case 0: //printf("fork i am here!!!\n");
             	        __child=1;
+            	        /* Create blink thread*/
+            	        __blink_run=1;
+                        if (pthread_create(&thid, NULL, thread_blink_led, (void *)&settings) != 0) {
+                            syslog (LOG_ERR, "pthread_create() error");
+                            exit(1);
+                        }
+                        
             	        if ((__fd_pid = create_pid_file(settings.pid_file, getpid()))<0){
     					    syslog (LOG_ERR, "child not create pid file %d",pid);
     					};
@@ -225,6 +259,12 @@ int main(int argc, char *argv[]) {
     			default: //printf("Parent here!!!\n");
     					// keep running as long as the client keeps the connection open
                         __child=0;
+                        /* Create blink thread*/
+            	        __blink_run=1;
+                        if (pthread_create(&thid, NULL, thread_blink_led, (void *)&settings) != 0) {
+                            syslog (LOG_ERR, "pthread_create() error");
+                            exit(1);
+                        }
     					while ((n = recv(sock, __TCPbuffer, TCP_RX_BUFFER_SIZE, 0)) > 0) {
     					    int i=0;
 
@@ -245,7 +285,7 @@ int main(int argc, char *argv[]) {
         					    else event_tx_led(&settings);
     					    }
     						    
-					   } 
+					   }
 		    }   
 		    if (__child==0) kill(pid, SIGTERM);
 		}
@@ -379,6 +419,7 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
                     if (gpio_permit_out_check(settings->led_rx 
                                         = strtol(optarg,(char **)NULL,10))){
                         settings->fd_led_rx = gpio_out_init(settings->led_rx);
+                        syslog (LOG_NOTICE, "rx led init gpio=%d",settings->led_rx, settings->fd_led_rx);
                     } else {
                         syslog (LOG_ERR, "could not gpio permit out gpio(%d)",settings->led_rx);
                         settings->led_rx=-1;
@@ -388,6 +429,7 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
                     if (gpio_permit_out_check(settings->led_tx 
                                         = strtol(optarg,(char **)NULL,10))){
                         settings->fd_led_tx = gpio_out_init(settings->led_tx);
+                        syslog (LOG_NOTICE, "tx led init gpio=%d",settings->led_tx, settings->fd_led_tx);
                     } else {
                         syslog (LOG_ERR, "could not gpio permit out gpio(%d)",settings->led_tx);
                         settings->led_tx=-1;
@@ -441,15 +483,11 @@ void display_usage(){
 }
 
 void event_rx_led(struct settings_t *settings){
-    static int value=0;
-    //gpio_out_write(settings->fd_led_rx, value);
-    value^=1;
+    __blink_flag|=(BLINK_RX_FLAG);
 }
 
 void event_tx_led(struct settings_t *settings){
-    static int value=0;
-    //gpio_out_write(settings->fd_led_tx, value);
-    value^=1;
+    __blink_flag|=(BLINK_TX_FLAG);
 }
 
 int gpio_permit_out_check(int gpio){
