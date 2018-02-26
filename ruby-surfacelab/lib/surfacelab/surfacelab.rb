@@ -28,7 +28,7 @@ module Surfacelab
                     :USR3 => { :bbpin => :USR3 , :bbmode => :OUT, :active => :high },
         },
         :SPI => {
-                    :DSL_SPI_DATA => {:bbspi => :SPI1, :bbspeed => 100000, :bbbpw => 16 }
+                    :DSL_SPI_DATA => {:bbspi => :SPI1, :bbmode =>:SPI_MODE_3, :bbspeed => 100000, :bbbpw => 16 }
         },
         :UART =>{
                     :MCU_UART_DEPTH_BOOT => {:bbuart => :UART4, :bbspeed => 19200},
@@ -51,7 +51,8 @@ module Surfacelab
             BBIF[:SPI].each{ |key,value|
                 devhash[:SPI][key] = SPIDevice.new(value[:bbspi])
                 devhash[:SPI][key].set_speed(value[:bbspeed]) if value[:bbspeed]
-                devhash[:SPI][key].set_bpw(value[:bbbpw]) if value[:bpw]
+                devhash[:SPI][key].set_bpw(value[:bbbpw]) if value[:bbbpw]
+                devhash[:SPI][key].set_mode(value[:bbmode]) if value[:bbmode]
             }
             BBIF[:UART].each{ |key,value|
                 devhash[:UART][key] = UARTDevice.new(value[:bbuart])

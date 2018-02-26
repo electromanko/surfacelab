@@ -16,7 +16,7 @@
 
 / {
        compatible = "ti,beaglebone", "ti,beaglebone-black", "ti,beaglebone-green";
-       part-number = "BB-SRFTST";
+       part-number = "BB-SRFLAB";
        version = "00A0";
        
        exclusive-use =
@@ -62,8 +62,7 @@
         "uart1",
         "uart2",
         "uart4",
-        "uart5",
-        "spi1";
+        "uart5";
        
        	fragment@0 {
                 target = <&ocp>;
@@ -90,12 +89,15 @@
 		            dsl_gpio: pinmux_dsl_gpio {
 		                pinctrl-single,pins = <
                             0x090 0x47  // "P8.7", /* DSL RESET OUT PIN */ pulldown
-                            0x094 0x57  // "P8.8", /* DSL MASTER/SLAVE OUT PIN */ pulldown
+                            0x094 0x47  // "P8.8", /* DSL MASTER/SLAVE OUT PIN */ pulldown
                             0x09C 0x6F  // "P8.9", /* DSL COT/RTA IN PIN (RESERVED)*/
                             0x098 0x6F  // "P8.10", /* DSL SP0 IN PIN (RESERVED) */
                             0x034 0x67  // "P8.11", /* DSL LINK IN PIN */ pulldown
                             0x030 0x77  // "P8.12", /* DSL IRQ IN PIN */ pullup
                             0x164 0x77  // "P9.42", /* DSL NRDY IN PIN */ pullup
+                            
+                            //0x190 0x7      /* mcasp0_aclkx.spi1_sclk, INPUT_PULLUP | MODE3 */
+                            //0x19c 0x7
 			            >;
 		            };
 		            mcuctl_gpio: pinmux_mcuctl_gpio {
@@ -140,15 +142,6 @@
                             0xdc ((1 << 3)|(1 << 4)|6)  /*( PIN_OUTPUT_PULLUP | MUX_MODE6 )  (T5) lcd_data15.uart5_rtsn */
                             0xd8 ((1 << 3)|(1 << 4)|(1 << 8)|6)  /*( PIN_INPUT_PULLUP | MUX_MODE6 )  (V4) lcd_data14.uart5_ctsn */
                         >;
-                    };
-                    bb_spi1_pins: pinmux_bb_spi1_pins {
-        				pinctrl-single,pins = <
-        					0x190 0x33      /* mcasp0_aclkx.spi1_sclk, INPUT_PULLUP | MODE3 */
-                            0x194 0x13      /* mcasp0_fsx.spi1_d0, OUTPUT_PULLUP | MODE3 */
-                            0x198 0x33      /* mcasp0_axr0.spi1_d1, INPUT_PULLUP | MODE3 */
-                            0x19c 0x13      /* mcasp0_ahclkr.spi1_cs0, OUTPUT_PULLUP | MODE3 */
-                            // 0x164 0x12	/* eCAP0_in_PWM0_out.spi1_cs1 OUTPUT_PULLUP | MODE2 */
-        				>;
                     };
              };
        };
@@ -227,39 +220,4 @@
 		};
        };
        
-       fragment@7 {
-		target = <&spi1>;
-		__overlay__ {
-			#address-cells = <1>;
-			#size-cells = <0>;
-
-			status = "okay";
-			pinctrl-names = "default";
-			pinctrl-0 = <&bb_spi1_pins>;
-			ti,pio-mode; /* disable dma when used as an overlay, dma gets stuck at 160 bits... */
-			ti,pindir-d0-out-d1-in = <1>;
-
-			channel@0 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-
-				compatible = "spidev";
-
-				reg = <0>;
-				spi-max-frequency = <16000000>;
-				spi-cpha;
-				spi-cpol;
-			};
-
-			channel@1 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-
-				compatible = "spidev";
-
-				reg = <1>;
-				spi-max-frequency = <16000000>;
-			};
-		};
-       };
 };

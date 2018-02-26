@@ -28,6 +28,7 @@ callback = lambda { |uart, data, count| puts "#{data}" }
 sl = SurfacelabDevice.new
 puts sl.devhash
 
+=begin
 uart4 = sl.devhash[:UART][:MCU_UART_DSL_CONFIG]
 uart4.run_on_each_line(callback)
 sleep 0.1
@@ -35,16 +36,19 @@ uart4.writeln("\r\n")
 uart4.writeln("config show\r\n")
 #uart4.each_line { |line| puts line }
 gets
+=end
 
 puts "LINKUP: #{sl.devhash[:GPIO][:DSL_LINKUP].digital_read}"
+
 spi1 = sl.devhash[:SPI][:DSL_SPI_DATA]
-sl.devhash[:GPIO][:DSL_MASTER].digital_write(:HIGH)
+sl.devhash[:GPIO][:DSL_MASTER].digital_write(:LOW)
 sl.devhash[:GPIO][:DSL_RESET].digital_write(:LOW)
 sleep 1
-for i in 0..1200
-  raw = spi1.xfer([ 0x41, 0x42, 0xAA, 0xAB].pack("C*"), 0, 100000, 10,16,2)
-  p raw.unpack("C*")
-sleep 1
+for i in 0..10000
+  #raw = spi1.xfer([ 0x41, 0x42, 0xAA, 0xAB].pack("C*"), 0, 100000, 10,16,2)
+  raw = spi1.xfer([ 0x41, 0x42].pack("C*"), 0, 100000, 10,16)
+  puts  "#{sl.devhash[:GPIO][:DSL_NRDY].digital_read}:#{i}:#{raw.unpack("C*")}"
+sleep 0.1
 end
 sleep 0.5
 raw = spi1.xfer([ 0x41, 0x43].pack("C*"), 0, 100000, 10,16)
@@ -63,3 +67,4 @@ p raw.unpack("C*")
 
   end
 end
+
