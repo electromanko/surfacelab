@@ -40,12 +40,14 @@ puts "LINKUP: #{sl.devhash[:GPIO][:DSL_LINKUP].digital_read}"
 spi1 = sl.devhash[:SPI][:DSL_SPI_DATA]
 sl.devhash[:GPIO][:DSL_MASTER].digital_write(:HIGH)
 sl.devhash[:GPIO][:DSL_RESET].digital_write(:LOW)
+sleep 1
+for i in 0..1200
+  raw = spi1.xfer([ 0x41, 0x42, 0xAA, 0xAB].pack("C*"), 0, 100000, 10,16,2)
+  p raw.unpack("C*")
+sleep 1
+end
 sleep 0.5
-#for i in 0..1
-raw = spi1.xfer([ 0x41, 0x42].pack("C*"), 0, 100000, 100,16)
-p raw.unpack("C*")
-#end
-raw = spi1.xfer([ 0x41, 0x43].pack("C*"), 0, 100000, 100,16)
+raw = spi1.xfer([ 0x41, 0x43].pack("C*"), 0, 100000, 10,16)
 p raw.unpack("C*")
 
 # Run the following block 5 times

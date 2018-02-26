@@ -76,6 +76,10 @@
                         P9_11_pinmux { status = "disabled"; };  /* uart4_rxd */
                         P8_37_pinmux { status = "disabled"; };  /* uart5_txd */
                         P8_38_pinmux { status = "disabled"; };  /* uart5_rxd */
+                        //P9_28_pinmux { status = "disabled"; };  /* spi1_cs0 */
+                        //P9_29_pinmux { status = "disabled"; };  /* spi1_d0 */
+                        //P9_30_pinmux { status = "disabled"; };  /* spi1_d1 */
+                        //P9_31_pinmux { status = "disabled"; };  /* spi1_sck */
                 };
         };
 
@@ -86,7 +90,7 @@
 		            dsl_gpio: pinmux_dsl_gpio {
 		                pinctrl-single,pins = <
                             0x090 0x47  // "P8.7", /* DSL RESET OUT PIN */ pulldown
-                            0x094 0x57  // "P8.8", /* DSL MASTER/SLAVE OUT PIN */ pullup
+                            //0x094 0x57  // "P8.8", /* DSL MASTER/SLAVE OUT PIN */ pullup
                             0x09C 0x6F  // "P8.9", /* DSL COT/RTA IN PIN (RESERVED)*/
                             0x098 0x6F  // "P8.10", /* DSL SP0 IN PIN (RESERVED) */
                             0x034 0x67  // "P8.11", /* DSL LINK IN PIN */ pulldown

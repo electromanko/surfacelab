@@ -2,7 +2,7 @@ module Surfacelab
     
     BBIF = {
         :GPIO => {
-                    :DSL_RESET => { :bbpin => :P8_7 , :bbmode => :OUT, :active => :high },
+                    :DSL_RESET => { :bbpin => :P8_7 , :bbmode => :OUT, :active => :low },
                     :DSL_MASTER => { :bbpin => :P8_8 , :bbmode => :OUT, :active => :low },
                     :DSL_LINKUP => {:bbpin => :P8_11, :bbmode => :IN, :bbpullmode => :PULLDOWN, :active => :high},
         
