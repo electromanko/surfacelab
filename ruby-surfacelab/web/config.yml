@@ -1,13 +1,13 @@
 ---
  environment: development
- chdir: /var/lib/cloud9/ruby/ruby-surfacelab/web
+ chdir: /var/lib/cloud9/surfacelab/ruby-surfacelab/web
  address: 127.0.0.1
  user: root
  group: root
  port: 4567
- pid: /var/lib/cloud9/ruby/ruby-surfacelab/web/tmp/thin.pid
- rackup: /var/lib/cloud9/ruby/ruby-surfacelab/web/config.ru
- log: /var/lib/cloud9/ruby/ruby-surfacelab/web/log/thin.log
+ pid: /var/lib/cloud9/surfacelab/ruby-surfacelab/web/tmp/thin.pid
+ rackup: /var/lib/cloud9/surfacelab/ruby-surfacelab/web/config.ru
+ log: /var/lib/cloud9/surfacelab/ruby-surfacelab/web/log/thin.log
  max_conns: 20
  timeout: 30
  max_persistent_conns: 10
