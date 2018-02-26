@@ -21,7 +21,7 @@
        
        exclusive-use =
        /* the pin header uses */
-        "P9.42",
+        
         
         /* DSL GPIO Pins*/
         "P8.7", /* DSL RESET OUT PIN */
@@ -30,6 +30,7 @@
         "P8.10", /* DSL SP0 IN PIN (RESERVED) */
         "P8.11", /* DSL LINK IN PIN */
         "P8.12", /* DSL IRQ IN PIN */
+        "P9.42", /* DSL NRDY IN PIN */
         
         /* MCUCTL GPIO Pins*/
         "P8.39", /* MCU RESET OUT PIN */
@@ -82,14 +83,6 @@
              target = <&am33xx_pinmux>;
             
              __overlay__ {
-                  sl_gpio: pinmux_sl_gpio {
-		        	pinctrl-single,pins = <
-                                0x164 0x37  // P9.42 PINS$29 GPIO0_31 = 31 Input Mode7 pullup 
-  
-                                /* OUTPUT  GPIO(mode7) 0x07 pulldown, 0x17 pullup, 0x?f no pullup/down */
-			                    /* INPUT   GPIO(mode7) 0x27 pulldown, 0x37 pullup, 0x?f no pullup/down */
-			            >;
-		            };
 		            dsl_gpio: pinmux_dsl_gpio {
 		                pinctrl-single,pins = <
                             0x090 0x47  // "P8.7", /* DSL RESET OUT PIN */ pulldown
@@ -98,6 +91,7 @@
                             0x098 0x6F  // "P8.10", /* DSL SP0 IN PIN (RESERVED) */
                             0x034 0x67  // "P8.11", /* DSL LINK IN PIN */ pulldown
                             0x030 0x77  // "P8.12", /* DSL IRQ IN PIN */ pullup
+                            0x164 0x77  // "P9.42", /* DSL NRDY IN PIN */ pullup
 			            >;
 		            };
 		            mcuctl_gpio: pinmux_mcuctl_gpio {
@@ -158,13 +152,6 @@
        fragment@2 {
 		target = <&ocp>;
 		__overlay__ {
-			sl_gpio_pinmux {
-				compatible = "bone-pinmux-helper";
-				status = "okay";
-				pinctrl-names = "default";
-				pinctrl-0 = <&sl_gpio>;
-			};
-			
 			dsl_gpio_pinmux {
 				compatible = "bone-pinmux-helper";
 				status = "okay";
