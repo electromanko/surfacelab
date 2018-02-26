@@ -36,10 +36,16 @@ uart4.writeln("config show\r\n")
 #uart4.each_line { |line| puts line }
 gets
 
+puts "LINKUP: #{sl.devhash[:GPIO][:DSL_LINKUP].digital_read}"
 spi1 = sl.devhash[:SPI][:DSL_SPI_DATA]
-raw = spi1.xfer([ 0x41, 0x42].pack("C*"))
+sl.devhash[:GPIO][:DSL_MASTER].digital_write(:HIGH)
+sl.devhash[:GPIO][:DSL_RESET].digital_write(:LOW)
+sleep 0.5
+#for i in 0..1
+raw = spi1.xfer([ 0x41, 0x42].pack("C*"), 0, 100000, 100,16)
 p raw.unpack("C*")
-raw = spi1.xfer([ 0x41, 0x43].pack("C*"))
+#end
+raw = spi1.xfer([ 0x41, 0x43].pack("C*"), 0, 100000, 100,16)
 p raw.unpack("C*")
 
 # Run the following block 5 times
