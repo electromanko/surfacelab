@@ -31,6 +31,10 @@
         "P8.11", /* DSL LINK IN PIN */
         "P8.12", /* DSL IRQ IN PIN */
         
+        /* MCUCTL GPIO Pins*/
+        "P8.39", /* MCU RESET OUT PIN */
+        "P8.40", /* MCU BOOT OUT PIN */
+        
         "P9.24", /* uart1_txd */
         "P9.26", /* uart1_rxd */
         
@@ -94,6 +98,12 @@
                             0x098 0x6F  // "P8.10", /* DSL SP0 IN PIN (RESERVED) */
                             0x034 0x67  // "P8.11", /* DSL LINK IN PIN */ pulldown
                             0x030 0x77  // "P8.12", /* DSL IRQ IN PIN */ pullup
+			            >;
+		            };
+		            mcuctl_gpio: pinmux_mcuctl_gpio {
+		                pinctrl-single,pins = <
+                            0x0B8 0x47  // "P8.39", /* MCU RESET OUT PIN */ pulldown 
+                            0x0BC 0x47  // "P8.40", /* MCU BOOT OUT PIN */ pulldown
 			            >;
 		            };
 		            bb_uart1_pins: pinmux_bb_uart1_pins {
@@ -160,6 +170,13 @@
 				status = "okay";
 				pinctrl-names = "default";
 				pinctrl-0 = <&dsl_gpio>;
+			};
+			
+			mcuctl_gpio_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <&mcuctl_gpio>;
 			};
 			
 			uart4-rtscts-pinmux {
