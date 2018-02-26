@@ -21,9 +21,15 @@
        
        exclusive-use =
        /* the pin header uses */
-        "P8.11", 
         "P9.42",
-        "P8.12",
+        
+        /* DSL GPIO Pins*/
+        "P8.7", /* DSL RESET OUT PIN */
+        "P8.8", /* DSL MASTER/SLAVE OUT PIN */
+        "P8.9", /* DSL COT/RTA IN PIN (RESERVED)*/
+        "P8.10", /* DSL SP0 IN PIN (RESERVED) */
+        "P8.11", /* DSL LINK IN PIN */
+        "P8.12", /* DSL IRQ IN PIN */
         
         "P9.24", /* uart1_txd */
         "P9.26", /* uart1_rxd */
@@ -74,12 +80,20 @@
              __overlay__ {
                   sl_gpio: pinmux_sl_gpio {
 		        	pinctrl-single,pins = <
-                                0x034 0x27  // P8.11 PINS$28 GPIO0_30 = 30 Output Mode7 pulldown
                                 0x164 0x37  // P9.42 PINS$29 GPIO0_31 = 31 Input Mode7 pullup 
-                                0x030 0x37  // P9.42 PINS$29 GPIO0_31 = 31 Input Mode7 pullup 
   
                                 /* OUTPUT  GPIO(mode7) 0x07 pulldown, 0x17 pullup, 0x?f no pullup/down */
 			                    /* INPUT   GPIO(mode7) 0x27 pulldown, 0x37 pullup, 0x?f no pullup/down */
+			            >;
+		            };
+		            dsl_gpio: pinmux_dsl_gpio {
+		                pinctrl-single,pins = <
+                            0x090 0x47  // "P8.7", /* DSL RESET OUT PIN */ pulldown
+                            0x094 0x57  // "P8.8", /* DSL MASTER/SLAVE OUT PIN */ pullup
+                            0x09C 0x6F  // "P8.9", /* DSL COT/RTA IN PIN (RESERVED)*/
+                            0x098 0x6F  // "P8.10", /* DSL SP0 IN PIN (RESERVED) */
+                            0x034 0x67  // "P8.11", /* DSL LINK IN PIN */ pulldown
+                            0x030 0x77  // "P8.12", /* DSL IRQ IN PIN */ pullup
 			            >;
 		            };
 		            bb_uart1_pins: pinmux_bb_uart1_pins {
@@ -115,8 +129,6 @@
                     };
                     u5_rtscts_pins: pinmux_u5_rtscts_pins {
                         pinctrl-single,pins = <
-                            // 0x0d4 0x0e /* lcd_data13 - pullup | mode 6 (uart4_rtsn) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-                            // 0x0d0 0x36 /* lcd_data12 - rx enable | pullup | mode 6 (uart4_ctsn) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
                             0xdc ((1 << 3)|(1 << 4)|6)  /*( PIN_OUTPUT_PULLUP | MUX_MODE6 )  (T5) lcd_data15.uart5_rtsn */
                             0xd8 ((1 << 3)|(1 << 4)|(1 << 8)|6)  /*( PIN_INPUT_PULLUP | MUX_MODE6 )  (V4) lcd_data14.uart5_ctsn */
                         >;
@@ -142,6 +154,14 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&sl_gpio>;
 			};
+			
+			dsl_gpio_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <&dsl_gpio>;
+			};
+			
 			uart4-rtscts-pinmux {
                 compatible = "bone-pinmux-helper"; /* Use the pinmux helper */
                 status="okay";
