@@ -1,0 +1,75 @@
+/*@import url(https://fonts.googleapis.com/css?family=Open+Sans&subset=latin,cyrillic);*/
+
+body {
+        color: black;
+        font-size: 16px;
+        /*font-family: 'Open Sans', sans-serif;*/
+        font-family: sans-serif;
+}
+
+hr {
+        /*border: none;
+        background-color: black;
+        color: red;
+        height: 1px;*/
+         border: 0; height: 0; border-top: 1px solid rgba(0, 0, 0, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.main {
+        text-align: center;
+}
+
+ul.mainMenu  {
+        margin: 0;
+        padding: 4px;
+        text-align: center;
+}
+ul.mainMenu li {
+        display: inline;
+        margin-right: 5px;
+        /*border: 1px solid #000;*/
+        padding: 3px;
+        color: red;
+}
+
+ul.mainMenu li a{
+        color: black;
+        font-family: "Times New Roman", Times, serif;
+        text-decoration: none;
+        font-size: 26px;
+}
+
+ul.mainMenu  li.active  a{
+        text-decoration: overline;
+        color: #424242;
+}
+
+ul.mainMenu li a:hover{
+        text-decoration: underline;
+}
+
+div.login{
+        float: right;
+        margin-right: 5px;
+}
+div.login ul {
+         margin: 0;
+        padding: 4px;
+        text-align: right;
+
+}
+
+div.login ul li {
+        display: inline;
+        margin-right: 5px;
+        /*border: 1px solid #000;*/
+        padding: 3px;
+        color: red;
+}
+
+div.login ul li input{
+        color: black;
+        font-family: "Times New Roman", Times, serif;
+        text-decoration: none;
+        font-size: 14px;
+}

@@ -1,0 +1,235 @@
+/*  
+* Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Purpose License Version 2 as
+* published by the Free Software Foundation
+*
+* Original from: github.com/jadonk/validation-scripts/blob/master/test-capemgr/ 
+*
+* Modified by Derek Molloy for the example on www.derekmolloy.ie
+* that maps GPIO pins for the example
+*/
+
+/dts-v1/;
+/plugin/;
+
+/ {
+       compatible = "ti,beaglebone", "ti,beaglebone-black", "ti,beaglebone-green";
+       part-number = "BB-SRFLAB";
+       version = "00A0";
+       
+       exclusive-use =
+       /* the pin header uses */
+        "P8.11", 
+        "P9.42",
+        "P8.12",
+        
+        "P9.24", /* uart1_txd */
+        "P9.26", /* uart1_rxd */
+        
+        "P9.21", /* uart2_txd */
+        "P9.22", /* uart2_rxd */
+        
+        "P9.13", /* uart4_txd */
+        "P9.11", /* uart4_rxd */
+        "P8.33", /* uart4 rts */
+        "P8.35", /* uart4 cts */
+        
+        "P8.37", /* uart5_txd */
+        "P8.38", /* uart5_rxd */
+        "P8.32", /* uart5 rts */
+        "P8.31", /* uart5 cts */
+        
+        "P9.31",	/* spi1_sclk */
+		"P9.29",	/* spi1_d0 */
+		"P9.30",	/* spi1_d1 */
+        "P9.28", /* spi1_cs0 */
+        // "P9.42", /* spi1_cs1 */
+        
+       /* the hardware ip uses */
+        "uart1",
+        "uart2",
+        "uart4",
+        "uart5",
+        "spi1";
+       
+       	fragment@0 {
+                target = <&ocp>;
+                __overlay__ {
+                        P9_24_pinmux { status = "disabled"; };  /* uart1_txd */
+                        P9_26_pinmux { status = "disabled"; };  /* uart1_rxd */
+                        P9_21_pinmux { status = "disabled"; };  /* uart2_txd */
+                        P9_22_pinmux { status = "disabled"; };  /* uart2_rxd */
+                        P9_13_pinmux { status = "disabled"; };  /* uart4_txd */
+                        P9_11_pinmux { status = "disabled"; };  /* uart4_rxd */
+                        P8_37_pinmux { status = "disabled"; };  /* uart5_txd */
+                        P8_38_pinmux { status = "disabled"; };  /* uart5_rxd */
+                };
+        };
+
+       fragment@1 {
+             target = <&am33xx_pinmux>;
+            
+             __overlay__ {
+                  sl_gpio: pinmux_sl_gpio {
+		        	pinctrl-single,pins = <
+                                0x034 0x27  // P8.11 PINS$28 GPIO0_30 = 30 Output Mode7 pulldown
+                                0x164 0x37  // P9.42 PINS$29 GPIO0_31 = 31 Input Mode7 pullup 
+                                0x030 0x37  // P9.42 PINS$29 GPIO0_31 = 31 Input Mode7 pullup 
+  
+                                /* OUTPUT  GPIO(mode7) 0x07 pulldown, 0x17 pullup, 0x?f no pullup/down */
+			                    /* INPUT   GPIO(mode7) 0x27 pulldown, 0x37 pullup, 0x?f no pullup/down */
+			            >;
+		            };
+		            bb_uart1_pins: pinmux_bb_uart1_pins {
+				        pinctrl-single,pins = <
+					        0x184 0x20 /* P9.24 uart1_txd.uart1_txd  OUTPUT  */
+					        0x180 0x20 /* P9.26 uart1_rxd.uart1_rxd  INPUT  */
+				        >;
+                    };
+                    bb_uart2_pins: pinmux_bb_uart2_pins {
+                        pinctrl-single,pins = <
+                                0x150 0x21 /* P9_22 = spi0_sclk.uart2_rxd | MODE1 */
+                                0x154 0x01 /* P9_21 = spi0_d0.uart2_txd | MODE1 */
+                            >;
+                    };
+                    bb_uart4_pins: pinmux_bb_uart4_pins {
+        				pinctrl-single,pins = <
+        					0x070 0x26	/* gpmc_wait0.uart4_rxd | MODE6 */
+        					0x074 0x06	/* gpmc_wpn.uart4_txd | MODE6 */
+        				>;
+                    };
+                    u4_rtscts_pins: pinmux_u4_rtscts_pins {
+                        pinctrl-single,pins = <
+                            0x0d4 0x0e /* lcd_data13 - pullup | mode 6 (uart4_rtsn) */
+                            0x0d0 0x36 /* lcd_data12 - rx enable | pullup | mode 6 (uart4_ctsn) */
+                        >;
+                    };
+                    bb_uart5_pins: pinmux_bb_uart5_pins {
+        				pinctrl-single,pins = <
+        					/* the uart pins */
+        					0x0C4 0x24	/* lcd_data9.uart5_rxd | MODE4 */
+        					0x0C0 0x04	/* lcd_data8.uart5_txd | MODE4 */
+        				>;
+                    };
+                    u5_rtscts_pins: pinmux_u5_rtscts_pins {
+                        pinctrl-single,pins = <
+                            // 0x0d4 0x0e /* lcd_data13 - pullup | mode 6 (uart4_rtsn) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+                            // 0x0d0 0x36 /* lcd_data12 - rx enable | pullup | mode 6 (uart4_ctsn) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+                            0xdc ((1 << 3)|(1 << 4)|6)  /*( PIN_OUTPUT_PULLUP | MUX_MODE6 )  (T5) lcd_data15.uart5_rtsn */
+                            0xd8 ((1 << 3)|(1 << 4)|(1 << 8)|6)  /*( PIN_INPUT_PULLUP | MUX_MODE6 )  (V4) lcd_data14.uart5_ctsn */
+                        >;
+                    };
+                    bb_spi1_pins: pinmux_bb_spi1_pins {
+        				pinctrl-single,pins = <
+        					0x190 0x33	/* mcasp0_aclkx.spi1_sclk, INPUT_PULLUP | MODE3 */
+        					0x194 0x33	/* mcasp0_fsx.spi1_d0, INPUT_PULLUP | MODE3 */
+        					0x198 0x13	/* mcasp0_axr0.spi1_d1, OUTPUT_PULLUP | MODE3 */
+        					0x19c 0x13	/* mcasp0_ahclkr.spi1_cs0, OUTPUT_PULLUP | MODE3 */
+        					// 0x164 0x12	/* eCAP0_in_PWM0_out.spi1_cs1 OUTPUT_PULLUP | MODE2 */
+        				>;
+                    };
+             };
+       };
+
+       fragment@2 {
+		target = <&ocp>;
+		__overlay__ {
+			sl_gpio_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <&sl_gpio>;
+			};
+			uart4-rtscts-pinmux {
+                compatible = "bone-pinmux-helper"; /* Use the pinmux helper */
+                status="okay";
+                /* Define custom names for indexes in pinctrl array: */
+                pinctrl-names = "default";
+                /* Set the elements of the pinctrl array to the pinmux overlays
+                   defined above: */
+                pinctrl-0 = <&u4_rtscts_pins>;
+            };
+            uart5-rtscts-pinmux {
+                compatible = "bone-pinmux-helper"; /* Use the pinmux helper */
+                status="okay";
+                /* Define custom names for indexes in pinctrl array: */
+                pinctrl-names = "default";
+                /* Set the elements of the pinctrl array to the pinmux overlays
+                   defined above: */
+                pinctrl-0 = <&u5_rtscts_pins>;
+            };
+		};
+	   };
+	   
+	   fragment@3 {
+		target = <&uart1>;	/* really uart1 */
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&bb_uart1_pins>;
+		};
+	   };
+	   
+	   fragment@4 {
+        target = <&uart2>;
+        __overlay__ {
+            status = "okay";
+            pinctrl-names = "default";
+            pinctrl-0 = <&bb_uart2_pins>;
+        };
+       };
+       
+       fragment@5 {
+		target = <&uart4>;	/* really uart4 */
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&bb_uart4_pins>;
+		};
+       };
+       
+       fragment@6 {
+		target = <&uart5>;	/* really uart5 */
+		__overlay__ {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&bb_uart5_pins>;
+		};
+       };
+       
+       fragment@7 {
+		target = <&spi1>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&bb_spi1_pins>;
+			ti,pio-mode; /* disable dma when used as an overlay, dma gets stuck at 160 bits... */
+
+			channel@0 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				compatible = "spidev";
+
+				reg = <0>;
+				spi-max-frequency = <16000000>;
+				spi-cpha;
+			};
+
+			channel@1 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				compatible = "spidev";
+
+				reg = <1>;
+				spi-max-frequency = <16000000>;
+			};
+		};
+       };
+};

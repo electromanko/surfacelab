@@ -1,0 +1,99 @@
+{
+  "admin": {
+    "name": "Admin",
+    "items": {
+      "user": {
+        "name": "admin",
+        "value": "surface",
+        "default": "surface",
+        "limits": {
+          "length": 20
+        }
+      },
+      "password": {
+        "name": "password",
+        "value": "surface",
+        "default": "surface",
+        "limits": {
+          "length": 20
+        }
+      }
+    }
+  },
+  "network": {
+    "name": "Network",
+    "items": {
+      "dhcp": {
+        "name": "dhcp",
+        "value": true,
+        "default": true
+      },
+      "ip": {
+        "name": "ip",
+        "value": "192.168.7.2",
+        "default": "192.168.7.2",
+        "limits": {
+          "ipaddr": true
+        }
+      },
+      "mask": {
+        "name": "mask",
+        "value": "255.255.255.0",
+        "default": "255.255.255.0",
+        "limits": {
+          "ipaddr": true
+        }
+      },
+      "gw": {
+        "name": "gw",
+        "value": "192.168.7.1",
+        "default": "192.168.7.1",
+        "limits": {
+          "ipaddr": true
+        }
+      }
+    }
+  },
+  "nmrdata": {
+    "name": "NMR",
+    "items": {
+      "tcpport": {
+        "name": "tcp port",
+        "value": 7777,
+        "default": 7777,
+        "limits": {
+          "min": 3000,
+          "max": 65534
+        }
+      }
+    }
+  },
+  "counter": {
+    "name": "Counter",
+    "items": {
+      "tcpport": {
+        "name": "tcp port",
+        "value": 7788,
+        "default": 7788,
+        "limits": {
+          "min": 3000,
+          "max": 65534
+        }
+      },
+      "external": {
+        "name": "impuls ustie",
+        "value": false,
+        "default": false
+      },
+      "tick_mm": {
+        "name": "tick/mm",
+        "value": 10,
+        "default": 10,
+        "limits": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    }
+  }
+}
