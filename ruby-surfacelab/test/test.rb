@@ -45,17 +45,17 @@ sl.devhash[:GPIO][:DSL_MASTER].digital_write(:LOW)
 sl.devhash[:GPIO][:DSL_RESET].digital_write(:LOW)
 sleep 1
 for i in 0..10000
-  #raw = spi1.xfer([ 0x41, 0x42, 0xAA, 0xAB].pack("C*"), 0, 100000, 10,16,2)
-  raw = spi1.xfer([ 0x41, 0x42].pack("C*"), 0, 100000, 10,16)
+  raw = spi1.xfer([ 0x41, 0x42, 0xAA, 0xAB, 0xAA, 0xAB, 0xAA, 0xAB, 0xAA, 0xAB, 0xAA, 0xAB, 0xAA, 0xAB, 0xAA, 0xAB, 0xAA, 0xAB, 0xAA, 0xAB].pack("C*"), 0, 2000000, 10,16,10)
+  #raw = spi1.xfer([ 0xFF, 0xFF].pack("C*"), 0, 100000, 10,16)
   puts  "#{sl.devhash[:GPIO][:DSL_NRDY].digital_read}:#{i}:#{raw.unpack("C*")}"
 sleep 0.1
 end
 sleep 0.5
-raw = spi1.xfer([ 0x41, 0x43].pack("C*"), 0, 100000, 10,16)
+raw = spi1.xfer([ 0x41, 0x43].pack("C*"), 0, 1000000, 10,16)
 p raw.unpack("C*")
 
 # Run the following block 5 times
-5.times do
+10.times do
   # Iterate over each LED
   [:USR0,:USR1,:USR2,:USR3].each do |led|
     # Turn on the LED

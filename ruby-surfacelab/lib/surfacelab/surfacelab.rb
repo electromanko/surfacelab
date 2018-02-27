@@ -31,7 +31,7 @@ module Surfacelab
                     :DSL_SPI_DATA => {:bbspi => :SPI1, :bbmode =>:SPI_MODE_3, :bbspeed => 100000, :bbbpw => 16 }
         },
         :UART =>{
-                    :MCU_UART_DEPTH_BOOT => {:bbuart => :UART4, :bbspeed => 19200},
+                    :MCU_UART_DEPTH_BOOT => {:bbuart => :UART4, :bbspeed => 19200, :bbparity => :EVEN},
                     :MCU_UART_DEPTH_EXTERN => {:bbuart => :UART1, :bbspeed => 19200},
                     :MCU_UART_TELEMETRY => {:bbuart => :UART2, :bbspeed => 19200},
                     :MCU_UART_DSL_CONFIG => {:bbuart => :UART5, :bbspeed => 19200},
@@ -57,6 +57,7 @@ module Surfacelab
             BBIF[:UART].each{ |key,value|
                 devhash[:UART][key] = UARTDevice.new(value[:bbuart])
                 devhash[:UART][key].set_speed(value[:bbspeed]) if value[:bbspeed]
+                devhash[:UART][key].set_parity(value[:bbparity]) if value[:bbparity]
             }
             devhash
         end
