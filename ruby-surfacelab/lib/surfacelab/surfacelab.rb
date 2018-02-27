@@ -28,7 +28,7 @@ module Surfacelab
                     :USR3 => { :bbpin => :USR3 , :bbmode => :OUT, :active => :high },
         },
         :SPI => {
-                    :DSL_SPI_DATA => {:bbspi => :SPI1, :bbspeed => 100000, :bbbpw => 8 }
+                    :DSL_SPI_DATA => {:bbspi => :SPI1, :bbspeed => 100000, :bbbpw => 16 }
         },
         :UART =>{
                     :MCU_UART_DEPTH_BOOT => {:bbuart => :UART4, :bbspeed => 19200},

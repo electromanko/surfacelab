@@ -28,7 +28,7 @@ callback = lambda { |uart, data, count| puts "#{data}" }
 sl = SurfacelabDevice.new
 puts sl.devhash
 
-uart4 = sl.devhash[:UART][:MCU_UART_DEPTH_BOOT]
+uart4 = sl.devhash[:UART][:MCU_UART_DSL_CONFIG]
 uart4.run_on_each_line(callback)
 sleep 0.1
 uart4.writeln("\r\n")
@@ -37,9 +37,9 @@ uart4.writeln("config show\r\n")
 gets
 
 spi1 = sl.devhash[:SPI][:DSL_SPI_DATA]
-raw = spi1.xfer([ 0x41, 0x42, 0].pack("C*"))
+raw = spi1.xfer([ 0x41, 0x42].pack("C*"))
 p raw.unpack("C*")
-raw = spi1.xfer([ 0x41, 0x42, 0].pack("C*"))
+raw = spi1.xfer([ 0x41, 0x43].pack("C*"))
 p raw.unpack("C*")
 
 # Run the following block 5 times
