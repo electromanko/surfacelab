@@ -9,7 +9,7 @@
 ### END INIT INFO
 
 CONFIG_FILE="/etc/sulad.conf"
-PIDFILE="/var/run/sulad.*"
+PIDFILES="/var/run/sulad.*"
 cmd="sulad"
 
 start() {
@@ -17,13 +17,13 @@ start() {
     IFS=$'\n'
     for var in $(cat $CONFIG_FILE)
     do   
-        sulad $var "--pid-file /var/run/sulad" &
+        echo "$var --pid-file /var/run/sulad" | xargs sulad
     done
     echo 'Service started' >&2
 }
 
 stop() {
-  $kill $(cat $PIDFILE)
+  echo $(cat $PIDFILES) | xargs kill
   echo 'Service stopped' >&2
 }
 
