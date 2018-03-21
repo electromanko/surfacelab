@@ -38,6 +38,8 @@ struct settings_t{
     char uart_parity_bit;       /* параметр -p */
     int uart_stop_bit;			/* параметр -s */
     int tcp_port; 				/* параметр -P */
+    int segment_delay_us;       /* параметр --segment-delay */
+    int segment_delay_size;     /* параметр --segment-delay-size */
     int led_rx;                 /* параметр --event-rx-led*/
     int fd_led_rx;                 /* параметр --event-rx-led*/
     int led_tx;                 /* параметр --event-tx-led*/
@@ -75,7 +77,8 @@ void scallback(int sig){
 }
 
 #define SEND_SEGMENT_SIZE 64
-#define SEND_SEGMENT_DELAY_US 1000
+#define SEND_SEGMENT_DELAY_US 1
+//1000
 
 int main(int argc, char *argv[]) {
 	pid_t pid;
@@ -211,14 +214,25 @@ int main(int argc, char *argv[]) {
     						    } else event_tx_led(&settings);
     						    i++;
     						}*/
-    						
-    						while (i<n){
-    						    if (write(uart_fd,__TCPbuffer+i, i+SEND_SEGMENT_SIZE<n ? SEND_SEGMENT_SIZE : n-i)<0){
-    							    syslog (LOG_ERR, "uart write error: %s", strerror(errno));
-    						    } else event_tx_led(&settings);
-    						    i+=SEND_SEGMENT_SIZE;
-    						    usleep(SEND_SEGMENT_DELAY_US);
-    						}
+    						//int segment_delay_us;       /* параметр --segment-delay */
+                            //int segment_delay_size;     /* параметр --segment-delay-size */
+                            int write_seg_size=0;
+    						if (settings.segment_delay_us>0)
+    						    while (i<n){
+    						        write_seg_size = i+settings.segment_delay_size<n ? settings.segment_delay_size : n-i;
+        						    if (write(uart_fd,__TCPbuffer+i, write_seg_size)<0){
+        							    syslog (LOG_ERR, "uart write error: %s", strerror(errno));
+        						    } else event_tx_led(&settings);
+        						    i+=settings.segment_delay_size;
+        						    usleep(settings.segment_delay_us);
+    						    }
+    					    else {
+    				            if (write(uart_fd,__TCPbuffer, n)<0){
+        							    syslog (LOG_ERR, "uart write error: %s", strerror(errno));
+        						    } 
+        					    else event_tx_led(&settings);
+    					    }
+    						    
 					   } 
 		    }   
 		    if (__child==0) kill(pid, SIGTERM);
@@ -296,6 +310,8 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
         { "device", required_argument, NULL, 'D' },
         { "baudrate", required_argument, NULL, 'S' },
         { "tcp-port", required_argument, NULL, 'P'},
+        { "segment-delay", required_argument, NULL, 0},
+        { "segment-delay-size", required_argument, NULL, 0},
         { "loop-local", no_argument, NULL, 0 },
         { "loop-remote", no_argument, NULL, 0 },
         { "help", no_argument, NULL, 'h' },
@@ -313,6 +329,8 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
     settings->loop=0;
     settings->inputFiles=NULL;         			/* входные файлы */
     settings->numInputFiles=0;        				/* число входных файлов */
+    settings->segment_delay_us=0;       /* параметр --segment-delay */
+    settings->segment_delay_size=1;     /* параметр --segment-delay-size */
     
     while( (opt = getopt_long( argc, argv, optString, longOpts, &longIndex  )) != -1 ) {
         switch( opt ) {
@@ -387,6 +405,12 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
                 }
                 else if(strcmp( "loop-remote", longOpts[longIndex].name ) == 0){
                     settings->loop = 'r';
+                }
+                else if(strcmp( "segment-delay", longOpts[longIndex].name ) == 0){
+                    settings->segment_delay_us = strtol(optarg,(char **)NULL,10);
+                }
+                else if(strcmp( "segment-delay-size", longOpts[longIndex].name ) == 0){
+                    settings->segment_delay_size = strtol(optarg,(char **)NULL,10);
                 }
                 break;
                  

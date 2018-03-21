@@ -63,8 +63,8 @@ int fd,c, res;
  else return -1;
  
  /* Stop bits */
- if (nstopb=1) {}
- else if (nstopb=2) newtio.c_cflag |= CSTOPB;
+ if (nstopb==1) {}
+ else if (nstopb==2) newtio.c_cflag |= CSTOPB;
  else return -1;
  
 /*

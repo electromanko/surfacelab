@@ -1,2 +1,2 @@
--D /dev/ttyO5 -S 19200 -P 8898 --event-rx-led 70 --event-tx-led 71
--D /dev/ttyO2 -S 1500000 -P 8899 --event-rx-led 72 --event-tx-led 73 --gpio-high 110 --gpio-high 113
+-D /dev/ttyO5 -S 19200 -P 8898 --segment-delay 200 -segment-size 8 --event-rx-led 70 --event-tx-led 71
+-D /dev/ttyO2 -S 115200 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-low 110 --gpio-low 113
