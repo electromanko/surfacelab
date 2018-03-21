@@ -96,12 +96,13 @@ int main(int argc, char *argv[]) {
 	    exit(-1);
 	}
 
+    
     if ((uart_fd=uart_init(settings.uart_device, 
     						settings.uart_speed,
     						settings.uart_data_bits,
     						settings.uart_parity_bit,
     						settings.uart_stop_bit))<0) {
-    	syslog (LOG_ERR, "could not set uart:uart_init()");
+    	syslog (LOG_ERR, "could not set uart:uart_init(%s, %d,%d,%c,%d)", settings.uart_device, settings.uart_speed, settings.uart_data_bits, settings.uart_parity_bit, settings.uart_stop_bit);
     	exit(-1);
     }
     
@@ -311,7 +312,7 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
         { "baudrate", required_argument, NULL, 'S' },
         { "tcp-port", required_argument, NULL, 'P'},
         { "segment-delay", required_argument, NULL, 0},
-        { "segment-delay-size", required_argument, NULL, 0},
+        { "segment-size", required_argument, NULL, 0},
         { "loop-local", no_argument, NULL, 0 },
         { "loop-remote", no_argument, NULL, 0 },
         { "help", no_argument, NULL, 'h' },
@@ -409,7 +410,7 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
                 else if(strcmp( "segment-delay", longOpts[longIndex].name ) == 0){
                     settings->segment_delay_us = strtol(optarg,(char **)NULL,10);
                 }
-                else if(strcmp( "segment-delay-size", longOpts[longIndex].name ) == 0){
+                else if(strcmp( "segment-size", longOpts[longIndex].name ) == 0){
                     settings->segment_delay_size = strtol(optarg,(char **)NULL,10);
                 }
                 break;
