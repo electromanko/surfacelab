@@ -9,6 +9,9 @@ module Surfacelab
                     :DSL_NRDY => {:bbpin => :P9_42, :bbmode => :IN, :bbpullmode => :PULLUP, :active => :low},
                     :DSL_IRQ => {:bbpin => :P8_12, :bbmode => :IN, :bbpullmode => :PULLUP, :active => :low},
                     
+                    :DSL_MODE0 => { :bbpin => :P9_28 , :bbmode => :OUT, :active => :low },
+                    :DSL_MODE1 => { :bbpin => :P8_31 , :bbmode => :OUT, :active => :low },
+                    
                     :DSL_CUART_CTS => {:bbpin => :P8_31, :bbmode => :IN, :bbpullmode => :PULLDOWN, :active => :low},
                     :DSL_CUART_RTS => {:bbpin => :P8_32, :bbmode => :OUT, :active => :high},
         
@@ -28,12 +31,12 @@ module Surfacelab
                     :USR3 => { :bbpin => :USR3 , :bbmode => :OUT, :active => :high },
         },
         :SPI => {
-                    :DSL_SPI_DATA => {:bbspi => :SPI1, :bbmode =>:SPI_MODE_3, :bbspeed => 100000, :bbbpw => 16 }
+#                    :DSL_SPI_DATA => {:bbspi => :SPI1, :bbmode =>:SPI_MODE_3, :bbspeed => 100000, :bbbpw => 16 }
         },
         :UART =>{
                     :MCU_UART_DEPTH_BOOT => {:bbuart => :UART4, :bbspeed => 19200, :bbparity => :EVEN},
                     :MCU_UART_DEPTH_EXTERN => {:bbuart => :UART1, :bbspeed => 19200},
-                    :MCU_UART_TELEMETRY => {:bbuart => :UART2, :bbspeed => 19200},
+                    :MCU_UART_DSL_DATA => {:bbuart => :UART2, :bbspeed => 115200},
                     :MCU_UART_DSL_CONFIG => {:bbuart => :UART5, :bbspeed => 19200},
         }
     }.freeze
