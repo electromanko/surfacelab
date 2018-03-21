@@ -19,7 +19,7 @@ included by <termios.h> */
 
 volatile int STOP=FALSE; 
 
-int uart_init(char* device, long int baud_rate, unsigned char ncharb, char parity, unsigned char nstopb){
+int uart_init(const char* device, long int baud_rate, unsigned char ncharb, char parity, unsigned char nstopb){
 int fd,c, res;
   struct termios oldtio,newtio;
 /* 
