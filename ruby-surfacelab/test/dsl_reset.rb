@@ -10,4 +10,4 @@ sleep 1
 sl.devhash[:GPIO][:DSL_RESET].digital_write(:LOW)
 callback2 = lambda { |pin,edge,count| puts "[#{count}] #{pin} #{edge}"}
 sl.devhash[:GPIO][:DSL_LINKUP].run_on_edge(callback2, :BOTH)
-sleep 40
+sleep 1

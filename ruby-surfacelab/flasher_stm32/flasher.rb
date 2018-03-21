@@ -32,12 +32,14 @@ uart4 = sl.devhash[:UART][:MCU_UART_DEPTH_BOOT]
 uart4.run_on_each_char(callback)
 
 #BOOT MODE
+puts "Reset MCU"
 sl.devhash[:GPIO][:MCU_RESET].digital_write(:HIGH)
 sl.devhash[:GPIO][:MCU_BOOT].digital_write(:HIGH)
 sleep 0.5
 sl.devhash[:GPIO][:MCU_RESET].digital_write(:LOW)
+puts "Entering Boot Mode"
 sleep 0.5
-for i in 0..100
+for i in 0..10
     uart4.write([0x7f].pack("C*"))
     sleep 0.1
 end
