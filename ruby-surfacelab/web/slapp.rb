@@ -263,25 +263,22 @@ __END__
     %input(type="radio" name="size" value="10000000") 10m
     %input(type="radio" name="size" value="100000000" ) 100m
     %input(type="radio" name="size" value="-1" ) Unlim
-  %div
-    -if testDSL.status =="started"
+  %div#here
+    -if testDSL.status[:state] !="stoped"
       %input(type="submit" name="action" value="Start" disabled)
       %input(type="submit" name="action" value="Stop")
       %input(type="submit" name="action" value="Loop" disabled)
-    -elsif testDSL.status == "stoped"
+      :javascript
+        setTimeout(function(){
+          window.location = window.location.href;
+        }, 2000);
+    -else
       %input(type="submit" name="action" value="Start")
       %input(type="submit" name="action" value="Stop" disabled)
       %input(type="submit" name="action" value="Loop")
-    -elsif  testDSL.status == "looped"
-      %input(type="submit" name="action" value="Start" disabled)
-      %input(type="submit" name="action" value="Stop")
-      %input(type="submit" name="action" value="Loop" disabled)
-    -else
-      %input(type="submit" name="action" value="Start" disabled)
-      %input(type="submit" name="action" value="Stop" disabled)
-      %input(type="submit" name="action" value="Loop" disabled)
+    %p= testDSL.status[:state]
     %p= testDSL.status
-  %div
+  
     
 @@login
 %h1 SL Admin Panel

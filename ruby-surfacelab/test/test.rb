@@ -4,7 +4,7 @@ include Beaglebone
 include Surfacelab
 
 callback = lambda { |uart, data, count| puts "#{data}" }
-
+1213.example!!!!!
 #p8_43 = GPIOPin.new(:P8_43, :IN, :PULLUP, :FAST)
 
 # Initialize pin P9_12 in OUTPUT mode
