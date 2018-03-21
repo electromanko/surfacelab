@@ -29,7 +29,7 @@ int sock=0;
 int __fd_pid=-1;
 int __child=0;
 
-static int gpio_permit_out[] = {70,71,72,73,74,75,110,113};
+static int gpio_permit_out[] = {86,88,87,89,70,71,110,113};
 
 struct settings_t{
 	const char *uart_device;	/* параметр -D */

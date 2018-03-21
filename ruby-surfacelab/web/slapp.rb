@@ -2,8 +2,10 @@
 require 'sinatra'
 require 'bcrypt'
 require 'sass'
+require 'yaml'
 require "./helpers/application_helper.rb"
 require "./slconfig.rb"
+require "./sldconfig.rb"
 require "../test/testDSL.rb"
 
 #require 'logger'
@@ -11,6 +13,10 @@ require "../test/testDSL.rb"
 
 CONFIG_FILE_JSON = 'db/settings.json'
 CONFIG_FILE_YAML = 'db/settings.yaml'
+DAEMON_CONFIG_FILE_YAML = 'db/suladconf.yaml'
+DAEMON_CONFIG_FILE_SLD = 'db/config'
+#NETWORK_CONFIG_FILE = 'db/network.conf'
+NETWORK_CONFIG_FILE = '/etc/network/interfaces.d/10-surfacelab'
 
 use Rack::Session::Cookie
 enable :logging, :dump_errors, :raise_errors
@@ -19,8 +25,9 @@ set :haml, :format => :html4
 userTable = {}
 mainMenu = { 
           :config => 'Config',
-          :terminal => 'Terminal',
-          :help => 'Help'
+          #:terminal => 'Terminal',
+          :daemon => 'Daemon',
+          #:help => 'Help'
 }
 
 
@@ -28,9 +35,22 @@ testDSL = TestDSL.new
 slconfig = SLConfig.new
 slconfig.load_config(CONFIG_FILE_YAML, :YAML)
 config = slconfig.config
+#begin
+  sldconfig = SLDConfig.load_config(DAEMON_CONFIG_FILE_YAML)
+#rescue Exception => e  
+#  puts e.message  
+#end
+daemon_parameter={
+  :speed => [2400,4800,9600,19200,38400,57600,115200,460800,500000,576000,921600,1000000,1152000,1500000,2000000],
+  :data_bits => [5,6,7,8],
+  :parity => ['n', 'o', 'e'],
+  :stop_bits => [1,2],
+  :leds => [0,86,88,87,89,70,71],
+  :leds_label => {0=>'none',86=>'1',88=>'2',87=>'3',89=>'4',70=>'5',71=>'6'}
+}
 
 password_salt = BCrypt::Engine.generate_salt
-password_hash = BCrypt::Engine.hash_secret("surface", password_salt)
+password_hash = BCrypt::Engine.hash_secret(config['admin']['items']['password']['value'], password_salt) #"surface"
 
 #helpers ApplicationHelper
 
@@ -58,7 +78,7 @@ end
 
 before do
 
-userTable["surface"] = {
+userTable[config['admin']['items']['user']['value']] = { #"surface"
     :salt =>  password_salt,
     :passwordhash => password_hash
 }
@@ -99,6 +119,54 @@ post "/terminal" do
   haml :terminal, :locals => {:item => :terminal, :testDSL => testDSL}
 end
 
+get "/daemon" do
+  if login?
+    haml :daemon, :locals => {:item => :daemon, :config => sldconfig, :daemon_parameter => daemon_parameter}
+  else
+    redirect "/login"
+  end
+end
+
+post "/daemon/:num" do
+  #haml :test, :locals => {:item => :daemon}
+#=begin
+  conf= sldconfig['port'][params['num'].to_i]
+  if login?
+    conf['tcp_port'] = params[:tcp_port].to_i
+    conf['sys_path'] = params[:sys_path].to_s
+    conf['speed'] = params[:speed][0].to_i
+    conf['data_bits'] = params[:data_bits][0].to_i
+    conf['parity'] = params[:parity][0].to_s
+    conf['stop_bits'] = params[:stop_bits][0].to_i
+    conf['delay_us'] = params[:delay_us].to_i
+    conf['delay_segment'] = params[:delay_segment].to_i
+    if params[:tx_led][0].to_i>0
+      conf['tx_led'] = params[:tx_led][0].to_i
+    else 
+      conf['tx_led'] = nil
+    end
+    
+    if params[:rx_led][0].to_i>0
+      conf['rx_led'] = params[:rx_led][0].to_i
+    else 
+      conf['rx_led'] = nil
+    end
+    
+    conf['gpio_high'] = params['gpio_high'].split(",").map { |s| s.to_i }
+    conf['gpio_low'] = params['gpio_low'].split(",").map { |s| s.to_i }
+    SLDConfig.save_config( sldconfig,DAEMON_CONFIG_FILE_YAML)
+    SLDConfig.save_config( sldconfig,DAEMON_CONFIG_FILE_SLD, :SLD)
+    system("cp #{DAEMON_CONFIG_FILE_SLD} /etc/sulad.conf")
+    system("/etc/init.d/sulad stop")
+    sleep 1
+    system("/etc/init.d/sulad start")
+    redirect "/daemon"
+  else 
+    redirect "/login"
+  end
+#=end
+end
+
 get "/login" do
   haml :login
 end
@@ -129,6 +197,10 @@ post "/settings/:category" do
   category = params['category']
   params['category'] = nil
   slconfig.set_categoty!(category, params)
+  slconfig.save_config(CONFIG_FILE_YAML, :YAML)
+  if category=='network'
+    SLConfig.save_network_confg(slconfig.config,"eth0",NETWORK_CONFIG_FILE)
+  end
   #haml :test
   redirect "/"
 end
@@ -161,26 +233,6 @@ post "/reboot" do
     system( "reboot" )
   end 
   haml :test
-end
-
-post "/speed_change" do
-  
-  system("echo \"-D /dev/ttyO5 -S 19200 -P 8898 --segment-delay 2000 --event-rx-led 70 --event-tx-led 71\" > /etc/sulad.conf")
-  case params["speed"]
-    when "115200"
-      system("echo \"-D /dev/ttyO2 -S 115200 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-low 110 --gpio-low 113\" >> /etc/sulad.conf")
-    when "1500000"
-      system("echo \"-D /dev/ttyO2 -S 1500000 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-high 110 --gpio-high 113\" >> /etc/sulad.conf")
-    when "576000"
-      system("echo \"-D /dev/ttyO2 -S 576000 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-low 110 --gpio-high 113\" >> /etc/sulad.conf")
-    when "1152000"
-      system("echo \"-D /dev/ttyO2 -S 1152000 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-high 110 --gpio-low 113\" >> /etc/sulad.conf")
-  end
-  sleep 1
-  system("/etc/init.d/sulad stop")
-  sleep 3
-  system("/etc/init.d/sulad start")
-  haml :test, :locals => {:item => :terminal}
 end
 
 # style="text-align:center"
@@ -273,12 +325,6 @@ __END__
   %input(type="submit" value="Poweoff")
 %form(action="/reboot" method="post")    
   %input(type="submit" value="Reboot")
-%form(action="/speed_change" method="post")
-  %input(type="radio" name="speed" value="115200") 115200
-  %input(type="radio" name="speed" value="576000") 576000
-  %input(type="radio" name="speed" value="1152000") 1152000
-  %input(type="radio" name="speed" value="1500000") 1500000
-  %input(type="submit" value="Change")
 @@terminal
 %h1 IO terminal
 %form(action="/terminal" method="post")
@@ -305,7 +351,89 @@ __END__
         setTimeout(function(){
           window.location = window.location.href;
         }, 2000);
-    
+@@daemon
+-i=0
+-config["port"].each do |port|
+  %h1=port["name"]
+  %form(action="/daemon/#{i}" method="post")
+    %div
+      %label(for="tcp_port") TCP port:
+      %input(type="text" name="tcp_port" value="#{port['tcp_port']}")
+    %div
+      %label(for="sys_path") System path:
+      %input(type="text" name="sys_path" value="#{port['sys_path']}")
+    %div
+      %label(for="speed") speed:
+      %select(size="1" name="speed[]")
+        -daemon_parameter[:speed].each do |baud|
+          -if baud==port['speed'].to_i
+            %option(value="#{baud}" selected="selected")=baud
+          -else
+            %option(value="#{baud}")=baud
+    %div
+      %label(for="data_bits") data bits:
+      %select(size="1" name="data_bits[]")
+        -daemon_parameter[:data_bits].each do |n|
+          -if n==port['data_bits'].to_i
+            %option(value="#{n}" selected="selected")=n
+          -else
+            %option(value="#{n}")=n
+    %div
+      %label(for="parity") parity:
+      %select(size="1" name="parity[]")
+        -daemon_parameter[:parity].each do |parity|
+          -if parity==port['parity'].to_s
+            %option(value="#{parity}" selected="selected")=parity
+          -else
+            %option(value="#{parity}")=parity
+    %div
+      %label(for="stop_bits") stop:
+      %select(size="1" name="stop_bits[]")
+        -daemon_parameter[:stop_bits].each do |stop|
+          -if stop==port['stop_bits'].to_i
+            %option(value="#{stop}" selected="selected")=stop
+          -else
+            %option(value="#{stop}")=stop
+    %div
+      %label(for="delay_us") delay(ms):
+      %input(type="text" name="delay_us" value="#{port['delay_us']}")
+    %div
+      %label(for="delay_segment") delay segment:
+      %input(type="text" name="delay_segment" value="#{port['delay_segment']}")
+    %div
+      %label(for="tx_led") tx led:
+      %select(size="1" name="tx_led[]")
+        -daemon_parameter[:leds].each do |led|
+          -if led==port['tx_led'].to_i
+            %option(value="#{led}" selected="selected")=daemon_parameter[:leds_label][led]
+          -else
+            %option(value="#{led}")=daemon_parameter[:leds_label][led]
+    %div
+      %label(for="rx_led") rx led:
+      %select(size="1" name="rx_led[]")
+        -daemon_parameter[:leds].each do |led|
+          -if led==port['rx_led'].to_i
+            %option(value="#{led}" selected="selected")=daemon_parameter[:leds_label][led]
+          -else
+            %option(value="#{led}")=daemon_parameter[:leds_label][led]
+    %div
+      %label(for="gpio_high") gpio high:
+      -if port['gpio_high'].nil?
+        -gpio=""
+      -else
+        -gpio=port['gpio_high'].join(',')
+      %input(type="text" name="gpio_high" value="#{gpio}")
+    %div
+      %label(for="gpio_low") gpio low:
+      -if port['gpio_low'].nil?
+        -gpio=""
+      -else
+        -gpio=port['gpio_low'].join(',')
+      %input(type="text" name="gpio_low" value="#{gpio}")
+    %input(type="submit" value="Set")
+    %input(type="reset" value="Restore")
+    -i+=1
+    %hr
 @@login
 %h1 SL Admin Panel
 %form(action="/login" method="post")

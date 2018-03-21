@@ -1,0 +1,56 @@
+---
+port:
+- name: Config port
+  tcp_port: 8898
+  sys_path: "/dev/ttyO5"
+  speed: 19200
+  data_bits: 8
+  parity: n
+  stop_bits: 1
+  delay_us: 0
+  delay_segment: 0
+  tx_led: 86
+  rx_led: 88
+  gpio_high: []
+  gpio_low: []
+- name: Data port
+  tcp_port: 8899
+  sys_path: "/dev/ttyO2"
+  speed: 1500000
+  data_bits: 8
+  parity: n
+  stop_bits: 2
+  delay_us: 0
+  delay_segment: 0
+  tx_led: 86
+  rx_led: 88
+  gpio_high:
+  - 110
+  - 113
+  gpio_low: []
+- name: Depth port
+  tcp_port: 8897
+  sys_path: "/dev/ttyO4"
+  speed: 115200
+  data_bits: 8
+  parity: n
+  stop_bits: 1
+  delay_us: 0
+  delay_segment: 0
+  tx_led: 86
+  rx_led: 88
+  gpio_high: []
+  gpio_low: []
+- name: Extern port
+  tcp_port: 8896
+  sys_path: "/dev/ttyO1"
+  speed: 115200
+  data_bits: 8
+  parity: n
+  stop_bits: 1
+  delay_us: 0
+  delay_segment: 0
+  tx_led: 86
+  rx_led: 88
+  gpio_high: []
+  gpio_low: []

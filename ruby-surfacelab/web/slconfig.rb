@@ -40,7 +40,7 @@ class SLConfig
             @config.each{|k, v|
                restore_default_category!(k)
             }
-        else 
+        else
             unless @config[category].nil?
                 restore_default_category!(category)
             else 
@@ -105,6 +105,19 @@ class SLConfig
             }
         end
         return true
+    end
+    
+    def self.save_network_confg(config, iface,path)
+        str="auto #{iface}\nallow-hotplug #{iface}\n"
+        if config['network']['items']['dhcp']['value']==true
+            str+="iface #{iface} inet dhcp\n"
+        else
+            str+="iface #{iface} inet static\n"
+            str+="\taddress #{config['network']['items']['ip']['value']}\n"
+            str+="\tnetmask #{config['network']['items']['mask']['value']}\n"
+            str+="\tgateway #{config['network']['items']['gw']['value']}\n"
+        end
+        File.open(path, 'w') { |file| file.write(str) }
     end
     
 private

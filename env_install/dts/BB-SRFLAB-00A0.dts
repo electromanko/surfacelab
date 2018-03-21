@@ -50,7 +50,13 @@
         "P8.32", /* uart5 rts */
         "P8.31", /* uart5 cts */
         
-        
+        /* Led Pins */
+        "P8.27",
+        "P8.28",
+        "P8.29",
+        "P8.30",
+        "P8.45",
+        "P8.46",
 
         // "P9.42", /* spi1_cs1 */
         
@@ -87,6 +93,17 @@
                             
                             0x19c 0x6F      /*"P9.28", DSL BAUD[0], OUTPUT*/
                             0x190 0x6F      /*"P9.31", DSL BAUD[1], OUTPUT*/
+			            >;
+		            };
+		            
+		            led_gpio: pinmux_led_gpio {
+		                pinctrl-single,pins = <
+                            0x0E0 0x4F  /* "P8.27", */
+                            0x0E8 0x4F  /* "P8.28", */
+                            0x0E4 0x4F  /* "P8.29", */
+                            0x0EC 0x4F  /* "P8.30", */
+                            0x0A0 0x4F  /*  "P8.45", */
+                            0x0A4 0x4F  /* "P8.46", */
 			            >;
 		            };
 		            mcuctl_gpio: pinmux_mcuctl_gpio {
@@ -143,6 +160,13 @@
 				status = "okay";
 				pinctrl-names = "default";
 				pinctrl-0 = <&dsl_gpio>;
+			};
+			
+			led_gpio_pinmux {
+				compatible = "bone-pinmux-helper";
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <&led_gpio>;
 			};
 			
 			mcuctl_gpio_pinmux {
