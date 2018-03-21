@@ -268,17 +268,17 @@ __END__
       %input(type="submit" name="action" value="Start" disabled)
       %input(type="submit" name="action" value="Stop")
       %input(type="submit" name="action" value="Loop" disabled)
-      :javascript
-        setTimeout(function(){
-          window.location = window.location.href;
-        }, 2000);
     -else
       %input(type="submit" name="action" value="Start")
       %input(type="submit" name="action" value="Stop" disabled)
       %input(type="submit" name="action" value="Loop")
     %p= testDSL.status[:state]
     %p= testDSL.status
-  
+    -if testDSL.status[:state] =="started"
+      :javascript
+        setTimeout(function(){
+          window.location = window.location.href;
+        }, 2000);
     
 @@login
 %h1 SL Admin Panel

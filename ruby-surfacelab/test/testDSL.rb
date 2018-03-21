@@ -56,21 +56,22 @@ class TestDSL
     def test_all
         reset_statistics
         @serialport.flush_input
-        @serialport.read_timeout=1000
+        @serialport.read_timeout=10000
         i=0
         while i< @status[:blockSize] do
-            snmb="a" #rand(256)
+            sndNum=rand(256)
             @status[:iter] += 1
-            @serialport.write(snmb)
+            @serialport.write([sndNum].pack("C"))
             @status[:c_send]+=1
-            rnmb = @serialport.getc
-            @status[:sstr]+="#{snmb} "
-            @status[:rstr]+="#{rnmb} "
-            if snmb == rnmb
+            rawrnmb = @serialport.read(1).unpack("C")
+            rcvNum = rawrnmb.nil? ? 0 : rawrnmb[0]
+            @status[:sstr]+="#{sndNum} "
+            @status[:rstr]+="#{rcvNum} "
+            if sndNum == rcvNum
                 @status[:c_recv]+=1
             else
                 @status[:c_err]+=1
-                @serialport.flush_input
+                #@serialport.flush_input
             end
             i+=1
         end
@@ -86,6 +87,15 @@ class TestDSL
         @status
     end
 end
+
+=begin
+t = TestDSL.new
+t.start(1000)
+sleep 20
+puts t.status
+sleep 5
+t.stop
+=end 
 
 =begin
 server = TCPServer.open(2000)    # Socket to listen on port 2000
