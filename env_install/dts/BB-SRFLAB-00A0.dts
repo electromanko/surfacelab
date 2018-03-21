@@ -103,8 +103,8 @@
                     };
                     bb_uart2_pins: pinmux_bb_uart2_pins {
                         pinctrl-single,pins = <
-                                0x150 0x21 /* P9_22 = spi0_sclk.uart2_rxd | MODE1 */
-                                0x154 0x01 /* P9_21 = spi0_d0.uart2_txd | MODE1 */
+                                0x150 0x21 /* P9_22 = spi0_sclk.uart2_rxd | MODE1 0x150 0x21*/
+                                0x154 0x01 /* P9_21 = spi0_d0.uart2_txd | MODE1 0x154 0x01*/
                             >;
                     };
                     bb_uart4_pins: pinmux_bb_uart4_pins {

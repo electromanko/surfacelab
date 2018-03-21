@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
     						if ((n = read(uart_fd, __UARTbuffer, UART_RX_BUFER_SIZE)) <= 0){
     						    syslog (LOG_ERR, "uart receive error: %s", strerror(errno));
     						}
-    						if (send(sock, __UARTbuffer, n, 0)<0){
+    						if (send(sock, __UARTbuffer, n, 0)<n){
     							syslog (LOG_ERR, "tcp send error: %s", strerror(errno));
     						} else event_rx_led(&settings);
     					}
@@ -221,14 +221,14 @@ int main(int argc, char *argv[]) {
     						if (settings.segment_delay_us>0)
     						    while (i<n){
     						        write_seg_size = i+settings.segment_delay_size<n ? settings.segment_delay_size : n-i;
-        						    if (write(uart_fd,__TCPbuffer+i, write_seg_size)<0){
+        						    if (write(uart_fd,__TCPbuffer+i, write_seg_size)<write_seg_size){
         							    syslog (LOG_ERR, "uart write error: %s", strerror(errno));
         						    } else event_tx_led(&settings);
         						    i+=settings.segment_delay_size;
         						    usleep(settings.segment_delay_us);
     						    }
     					    else {
-    				            if (write(uart_fd,__TCPbuffer, n)<0){
+    				            if (write(uart_fd,__TCPbuffer, n)<n){
         							    syslog (LOG_ERR, "uart write error: %s", strerror(errno));
         						    } 
         					    else event_tx_led(&settings);
