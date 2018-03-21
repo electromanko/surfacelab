@@ -1,6 +1,7 @@
 INSTALL_PREFIX = /usr/local
 PROG_NAME = sulad
 IDIR =include
+SDIR =src
 CC=gcc
 CFLAGS=-I$(IDIR)
 
@@ -16,7 +17,7 @@ _OBJ = main.o uart.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
-$(ODIR)/%.o: %.c $(DEPS)
+$(ODIR)/%.o: $(SDIR)/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(PROG_NAME): $(OBJ)

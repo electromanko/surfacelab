@@ -26,6 +26,8 @@ int __listen_sock=0;
 char __TCPbuffer[TCP_RX_BUFER_SIZE];
 char __UARTbuffer[UART_RX_BUFER_SIZE];
 int sock=0;
+int __fd_pid=-1;
+int __child=0;
 
 static int gpio_permit_out[] = {70,71,72,73,74,75,110,113};
 
@@ -40,6 +42,7 @@ struct settings_t{
     int fd_led_rx;                 /* параметр --event-rx-led*/
     int led_tx;                 /* параметр --event-tx-led*/
     int fd_led_tx;                 /* параметр --event-tx-led*/
+    const char *pid_file;                 /* параметр --pid-file*/
     char **inputFiles;          /* входные файлы */
     int numInputFiles;          /* число входных файлов */
 } settings;
@@ -52,14 +55,21 @@ int gpio_out_init(int gpio);
 void gpio_out_deinit(int fd);
 int gpio_out_write(int fd, int value);
 static void skeleton_daemon();
+int create_pid_file(const char *pid_file, int pid);
+int delete_pid_file(int pid);
 
 void display_usage();
 int set_option(struct settings_t *settings, int argc, char *argv[]);
 
 void scallback(int sig){
-    syslog (LOG_NOTICE, "Send SIGTERM");
-    close(sock);
-    close(__listen_sock);
+    syslog (LOG_NOTICE, "Close thread");
+    delete_pid_file(__fd_pid);
+    
+    if (__child>0) {
+        close(sock);
+        close(__listen_sock);
+    }
+    
     exit(0);
 }
 
@@ -127,6 +137,10 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in client_address;
 	int client_address_len = 0;
 	// run indefinitely
+	if ((__fd_pid = create_pid_file(settings.pid_file, getpid()))<0){
+					    syslog (LOG_ERR, "not create pid file %d:",pid);
+					    syslog (LOG_ERR, "%s",settings.pid_file);
+	};
 	while (true) {
 		// open a new socket to transmit data per connection
 		//int sock;
@@ -147,6 +161,10 @@ int main(int argc, char *argv[]) {
 			case -1: syslog (LOG_ERR, "fork"); /* произошла ошибка */
         			 exit(1); /*выход из родительского процесса*/
         	case 0: //printf("fork i am here!!!\n");
+        	        __child=1;
+        	        if ((__fd_pid = create_pid_file(settings.pid_file, getpid()))<0){
+					    syslog (LOG_ERR, "child not create pid file %d",pid);
+					};
         			while ((n = read(uart_fd, __UARTbuffer, UART_RX_BUFER_SIZE)) > 0) {
         				//__UARTbuffer[n]=0;
 						//printf("UART received: %s", __UARTbuffer);
@@ -158,6 +176,7 @@ int main(int argc, char *argv[]) {
 					break;
 			default: //printf("Parent here!!!\n");
 					// keep running as long as the client keeps the connection open
+                     __child=0;
 					while ((n = recv(sock, __TCPbuffer, TCP_RX_BUFER_SIZE, 0)) > 0) {
 						//__TCPbuffer[n]=0;
 						//printf("TCP received: %s", __TCPbuffer);
@@ -168,7 +187,7 @@ int main(int argc, char *argv[]) {
 						} else event_tx_led(&settings);
 					} 
 		}
-
+        kill(pid, SIGTERM);
 		close(sock);
 	}
 
@@ -237,6 +256,7 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
         { "event-tx-led", required_argument, NULL, 0},
         { "gpio-high", required_argument, NULL, 0},
         { "gpio-low", required_argument, NULL, 0},
+        { "pid-file", required_argument, NULL, 0},
         { "device", required_argument, NULL, 'D' },
         { "baudrate", required_argument, NULL, 'S' },
         { "tcp-port", required_argument, NULL, 'P'},
@@ -284,7 +304,10 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
                 display_usage();
                 break;
             case 0:     /* длинная опция без короткого эквивалента */
-                if( strcmp( "event-rx-led", longOpts[longIndex].name ) == 0 ) {
+                if( strcmp( "pid-file", longOpts[longIndex].name ) == 0 ) {
+                    settings->pid_file = optarg;
+                }
+                else if( strcmp( "event-rx-led", longOpts[longIndex].name ) == 0 ) {
                     if (gpio_permit_out_check(settings->led_rx 
                                         = strtol(optarg,(char **)NULL,10))){
                         settings->fd_led_rx = gpio_out_init(settings->led_rx);
@@ -411,5 +434,29 @@ int gpio_out_write(int fd, int value){
     //fflush(fd);
 }
 
+int create_pid_file(const char *pid_file, int pid){
+    int fd_pid_file;
+    char str[128];
+    char *target = str;
+    target += snprintf(target, sizeof(str)-(target-str),"%s", pid_file);
+    target += snprintf(target, sizeof(str)-(target-str),".%d.pid", pid);
+    
+    if ((fd_pid_file = open(str, O_WRONLY | O_APPEND | O_CREAT))<0) {
+        return -1;
+    }
+    dprintf(fd_pid_file,"%d\n", pid);
+    return fd_pid_file;
+    //strncpy(buf,settings->pid_file,sizeof(buf)-1);
+}
 
+int delete_pid_file(int pid){
+    char str[128];
+    char path[256];
+    snprintf(str, sizeof(str)-1, "/proc/self/fd/%d",pid);
+    int n = readlink(str, path, sizeof(path)-1);
+    path[n]='\0';
+    syslog (LOG_NOTICE, "Unlink");
+    syslog (LOG_NOTICE, "Unlink: %s", path);
+    return unlink(path);
+}
 //
