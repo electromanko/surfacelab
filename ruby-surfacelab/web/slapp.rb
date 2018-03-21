@@ -4,6 +4,7 @@ require 'bcrypt'
 require 'sass'
 require "./helpers/application_helper.rb"
 require "./slconfig.rb"
+require "../test/testDSL.rb"
 
 #require 'logger'
 
@@ -19,9 +20,11 @@ userTable = {}
 mainMenu = { 
           :config => 'Config',
           :terminal => 'Terminal',
-          :about => 'About'
+          :help => 'Help'
 }
 
+
+testDSL = TestDSL.new
 slconfig = SLConfig.new
 slconfig.load_config(CONFIG_FILE_YAML, :YAML)
 config = slconfig.config
@@ -78,10 +81,22 @@ end
 
 get "/terminal" do
   if login? 
-    haml :terminal, :locals => {:item => :terminal}
+    haml :terminal, :locals => {:item => :terminal, :testDSL => testDSL}
   else
     redirect "/login"
   end
+end
+
+post "/terminal" do
+  if params[:action] == "Start"
+    testDSL.start(params[:size]) unless params[:size].nil?
+  elsif params[:action] == "Loop"
+    testDSL.start(params[:size])
+  else
+    testDSL.stop
+  end
+  #haml :test, :locals => {:item => :terminal}
+  haml :terminal, :locals => {:item => :terminal, :testDSL => testDSL}
 end
 
 get "/login" do
@@ -129,6 +144,7 @@ get "/logout" do
   session[:username] = nil if login?
   redirect "/"
 end
+
 
 post "/poweroff" do
   if login?
@@ -235,8 +251,33 @@ __END__
     %input(type="submit" value="Default" formaction="/settings/restore/#{key}")
 %form(action="/poweroff" method="post")    
   %input(type="submit" value="Poweoff")
+%form(action="/reboot" method="post")    
+  %input(type="submit" value="Reboot")
 @@terminal
-%h1 IO
+%h1 IO terminal
+%form(action="/terminal" method="post")
+  %div
+    %label(for="sizeBlock") Size block:
+    %input(type="radio" name="size" value="1000") 1k
+    %input(type="radio" name="size" value="1000000") 1m
+    %input(type="radio" name="size" value="10000000") 10m
+    %input(type="radio" name="size" value="100000000" ) 100m
+    %input(type="radio" name="size" value="-1" ) Unlim
+  %div
+    -if testDSL.status =="started"
+      %input(type="submit" name="action" value="Start" disabled)
+    -else
+      %input(type="submit" name="action" value="Start")
+    -if testDSL.status == "stoped"
+      %input(type="submit" name="action" value="Stop" disabled)
+    -else
+      %input(type="submit" name="action" value="Stop")
+    -if testDSL.status == "looped"
+      %input(type="submit" name="action" value="Loop" disabled)
+    -else
+      %input(type="submit" name="action" value="Loop")
+  %div
+    
 @@login
 %h1 SL Admin Panel
 %form(action="/login" method="post")
@@ -270,7 +311,7 @@ __END__
 %p Wrong username or password
 %p Please try again!
 @@test
-%h1= params['category']
+%h1 Test
 %h2= params
 @@errrrr
 

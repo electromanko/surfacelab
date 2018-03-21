@@ -13,3 +13,4 @@ rvmsudo gem install bundler
 rvmsudo gem install ../beaglebone/beaglebone-2.2.6.gem
 bundle install ../ruby-surfacelab/Gemfile
 bundle install ../ruby-surfacelab/web/Gemfile
+rvm alias create surfacelab ruby-2.4.1@surfacelab
