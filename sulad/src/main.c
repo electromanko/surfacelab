@@ -81,6 +81,8 @@ void scallback(int sig){
 //1000
 
 int main(int argc, char *argv[]) {
+    int baud_base=0;
+    int custom_divisor=0;
 	pid_t pid;
 	int uart_fd;
 	
@@ -101,12 +103,16 @@ int main(int argc, char *argv[]) {
     						settings.uart_speed,
     						settings.uart_data_bits,
     						settings.uart_parity_bit,
-    						settings.uart_stop_bit))<0) {
+    						settings.uart_stop_bit,
+    						&baud_base,
+    						&custom_divisor))<0) {
     	syslog (LOG_ERR, "could not set uart:uart_init(%s, %d,%d,%c,%d)", settings.uart_device, settings.uart_speed, settings.uart_data_bits, settings.uart_parity_bit, settings.uart_stop_bit);
     	exit(-1);
     }
     
-
+    if (custom_divisor){
+        syslog (LOG_NOTICE, "Set custom baudrate: baud_base=%d, custom_divisor=%d, speed=%f", baud_base, custom_divisor, (float)baud_base/custom_divisor);
+    }
 	// socket address used for the server
 	struct sockaddr_in server_address;
 	memset(&server_address, 0, sizeof(server_address));
@@ -358,7 +364,6 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
                 break;
                  
             case 'h':   /* намеренный проход в следующий case-блок */
-            case '?':
                 display_usage();
                 break;
             case 0:     /* длинная опция без короткого эквивалента */
@@ -414,9 +419,9 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
                     settings->segment_delay_size = strtol(optarg,(char **)NULL,10);
                 }
                 break;
-                 
+            case '?':
             default:
-                /* сюда на самом деле попасть невозможно. */
+                syslog (LOG_ERR, "Unknown option '%s'. Ignore", argv[optind-1]);
                 break;
         }
     }
@@ -432,13 +437,13 @@ void display_usage(){
 
 void event_rx_led(struct settings_t *settings){
     static int value=0;
-    gpio_out_write(settings->fd_led_rx, value);
+    //gpio_out_write(settings->fd_led_rx, value);
     value^=1;
 }
 
 void event_tx_led(struct settings_t *settings){
     static int value=0;
-    gpio_out_write(settings->fd_led_tx, value);
+    //gpio_out_write(settings->fd_led_tx, value);
     value^=1;
 }
 

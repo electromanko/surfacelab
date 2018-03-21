@@ -6,7 +6,7 @@ gem 'bcrypt'
 gem 'haml'
 gem 'ipaddress'
 gem 'sass'
-gem 'serialport', :git => 'https://github.com/electromanko/ruby-serialport.git'
+#gem 'serialport', :git => 'https://github.com/electromanko/ruby-serialport.git'
 #:path => "/var/lib/cloud9/surfacelab/ruby-serialport"
-gem 'beaglebone', :git => 'https://github.com/electromanko/beaglebone.git'
+#gem 'beaglebone', :git => 'https://github.com/electromanko/beaglebone.git'
 #:path => "/var/lib/cloud9/surfacelab/beaglebone"

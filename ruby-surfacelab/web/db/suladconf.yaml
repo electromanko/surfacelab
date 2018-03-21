@@ -7,7 +7,7 @@ port:
   data_bits: 8
   parity: n
   stop_bits: 1
-  delay_us: 0
+  delay_us: 21
   delay_segment: 0
   tx_led: 86
   rx_led: 88
@@ -20,10 +20,10 @@ port:
   data_bits: 8
   parity: n
   stop_bits: 2
-  delay_us: 0
-  delay_segment: 0
-  tx_led: 86
-  rx_led: 88
+  delay_us: 600
+  delay_segment: 64
+  tx_led: 87
+  rx_led: 89
   gpio_high:
   - 110
   - 113
@@ -37,8 +37,8 @@ port:
   stop_bits: 1
   delay_us: 0
   delay_segment: 0
-  tx_led: 86
-  rx_led: 88
+  tx_led: 70
+  rx_led: 71
   gpio_high: []
   gpio_low: []
 - name: Extern port
@@ -50,7 +50,7 @@ port:
   stop_bits: 1
   delay_us: 0
   delay_segment: 0
-  tx_led: 86
-  rx_led: 88
+  tx_led: 70
+  rx_led: 71
   gpio_high: []
   gpio_low: []

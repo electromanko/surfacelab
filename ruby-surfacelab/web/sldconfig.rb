@@ -26,16 +26,14 @@ class SLDConfig
                     str+= " -S #{port['speed']} -b #{port['data_bits']} -p #{port['parity']}"
                     str+= " -s #{port['stop_bits']}"
                     str+=" --segment-delay #{port['delay_us']}" if port['delay_us']!=0
-                    str+=" --segment-delay-size #{port['delay_segment']}" if port['delay_segment']!=0
+                    str+=" --segment-size #{port['delay_segment']}" if port['delay_segment']!=0
                     str+=" --event-rx-led #{port['rx_led'].to_i}" if port['rx_led'].to_i>0
                     str+=" --event-tx-led #{port['tx_led'].to_i}" if port['tx_led'].to_i>0
-                    #str+=" --gpio_high #{port['gpio_high'].join(',')}" if port['gpio_high'].size>0
                     port['gpio_high'].each do |gpio|
-                        str+=" --gpio_high #{gpio}"
+                        str+=" --gpio-high #{gpio}"
                     end
-                    #str+=" --gpio_low #{port['gpio_low'].join(',')}" if port['gpio_low'].size>0
                     port['gpio_low'].each do |gpio|
-                        str+=" --gpio_low #{gpio}"
+                        str+=" --gpio-low #{gpio}"
                     end
                     str+="\n"
                 end

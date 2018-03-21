@@ -1,4 +1,0 @@
--P 8898 -D /dev/ttyO5 -S 19200 -b 8 -p n -s 1 --event-rx-led 88 --event-tx-led 86
--P 8899 -D /dev/ttyO2 -S 1500000 -b 8 -p n -s 2 --event-rx-led 88 --event-tx-led 86 --gpio_high 110 --gpio_high 113
--P 8897 -D /dev/ttyO4 -S 115200 -b 8 -p n -s 1 --event-rx-led 88 --event-tx-led 86
--P 8896 -D /dev/ttyO1 -S 115200 -b 8 -p n -s 1 --event-rx-led 88 --event-tx-led 86

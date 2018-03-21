@@ -7,6 +7,10 @@
 #include <strings.h>
 #include <syslog.h>
 
+#include <termio.h>
+#include <err.h>
+#include <linux/serial.h>
+
 /* baudrate settings are defined in <asm/termbits.h>, which is
 included by <termios.h> */
 #define BAUDRATE B1500000            
@@ -19,9 +23,28 @@ included by <termios.h> */
 
 volatile int STOP=FALSE; 
 
-int uart_init(const char* device, long int baud_rate, unsigned char ncharb, char parity, unsigned char nstopb){
-int fd,c, res;
+int set_speed(int fd, long int rate, struct termios *options, int *baud_base);
+
+static int rate_to_constant(int baudrate) {
+#define B(x) case x: return B##x
+	switch(baudrate) {
+		B(50);     B(75);     B(110);    B(134);    B(150);
+		B(200);    B(300);    B(600);    B(1200);   B(1800);
+		B(2400);   B(4800);   B(9600);   B(19200);  B(38400);
+		B(57600);  B(115200); B(230400); B(460800); B(500000); 
+		B(576000); B(921600); B(1000000);B(1152000);B(1500000); 
+	default: return 0;
+	}
+#undef B
+} 
+
+int uart_init(const char* device, long int baud_rate, unsigned char ncharb, char parity, unsigned char nstopb, int *baud_base, int *custom_divisor){
+  int fd,c, res;
+  //long int custom_baudrate=0;
+  //long int closestSpeed=0;
   struct termios oldtio,newtio;
+  struct serial_struct ss;
+  *custom_divisor=*baud_base=0;
 /* 
   Open modem device for reading and writing and not as controlling tty
   because we don't want to get killed if linenoise sends CTRL-C.
@@ -46,8 +69,8 @@ int fd,c, res;
 */
 
  newtio.c_cflag = CLOCAL | CREAD;
- 
- if (cfsetspeed (&newtio, (speed_t) baud_rate)<0) return -1;
+  
+ //if (cfsetspeed (&newtio, (speed_t) baud_rate)<0) return -1;
  
  /* Change bit per char*/
  if (ncharb==8) newtio.c_cflag |= CS8;
@@ -110,12 +133,12 @@ int fd,c, res;
  newtio.c_cc[VLNEXT]   = 0;     /* Ctrl-v */
  newtio.c_cc[VEOL2]    = 0;     /* '\0' */
 
-/* 
-  now clean the modem line and activate the settings for the port
-*/
+ *custom_divisor =set_speed(fd, baud_rate, &newtio, baud_base);
+     /* 
+      now clean the modem line and activate the settings for the port
+    */
  tcflush(fd, TCIFLUSH);
  tcsetattr(fd,TCSANOW,&newtio);
-
 /*
   terminal settings done, now handle input
   In this example, inputting a 'z' at the beginning of a line will 
@@ -124,3 +147,45 @@ int fd,c, res;
 return fd;
 }
 
+/* Open serial port in raw mode, with custom baudrate if necessary */
+int set_speed(int fd, long int rate, struct termios *options, int *baud_base)
+{
+	struct serial_struct serinfo;
+	long int speed = 0;
+    *baud_base=0;
+	speed = rate_to_constant(rate);
+
+	if (speed == 0) {
+		/* Custom divisor */
+		serinfo.reserved_char[0] = 0;
+		if (ioctl(fd, TIOCGSERIAL, &serinfo) < 0)
+			return -1;
+		serinfo.flags &= ~ASYNC_SPD_MASK;
+		serinfo.flags |= ASYNC_SPD_CUST;
+		serinfo.custom_divisor = (serinfo.baud_base + (rate / 2)) / rate;
+		if (serinfo.custom_divisor < 1) 
+			serinfo.custom_divisor = 1;
+		if (ioctl(fd, TIOCSSERIAL, &serinfo) < 0)
+			return -1;
+		if (ioctl(fd, TIOCGSERIAL, &serinfo) < 0)
+			return -1;
+		if (serinfo.custom_divisor * rate != serinfo.baud_base) {
+			/*warnx("actual baudrate is %d / %d = %f",
+			      serinfo.baud_base, serinfo.custom_divisor,
+			      (float)serinfo.baud_base / serinfo.custom_divisor);*/
+		}
+	}
+
+	//fcntl(fd, F_SETFL, 0);
+	//tcgetattr(fd, &options);
+	cfsetispeed(options, speed ?: B38400);
+	cfsetospeed(options, speed ?: B38400);
+	//cfmakeraw(options);
+	//options.c_cflag |= (CLOCAL | CREAD);
+	//options.c_cflag &= ~CRTSCTS;
+	//if (tcsetattr(fd, TCSANOW, &options) != 0)
+	//	return -1;
+
+    *baud_base = serinfo.baud_base;
+	return speed ? 0 : serinfo.custom_divisor;
+}

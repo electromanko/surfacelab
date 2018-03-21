@@ -6,16 +6,17 @@ require 'yaml'
 require "./helpers/application_helper.rb"
 require "./slconfig.rb"
 require "./sldconfig.rb"
-require "../test/testDSL.rb"
+#require "../test/testDSL.rb"
 
 #require 'logger'
 
+RO_ROOT='/ro'
+RW_REMOUNT_DIRECTORIES = ['/etc', '/var/lib/cloud9/surfacelab/ruby-surfacelab/web/db']
 
 CONFIG_FILE_JSON = 'db/settings.json'
 CONFIG_FILE_YAML = 'db/settings.yaml'
 DAEMON_CONFIG_FILE_YAML = 'db/suladconf.yaml'
-DAEMON_CONFIG_FILE_SLD = 'db/config'
-#NETWORK_CONFIG_FILE = 'db/network.conf'
+DAEMON_CONFIG_FILE_SLD="/etc/sulad.conf"
 NETWORK_CONFIG_FILE = '/etc/network/interfaces.d/10-surfacelab'
 
 use Rack::Session::Cookie
@@ -31,7 +32,7 @@ mainMenu = {
 }
 
 
-testDSL = TestDSL.new
+#testDSL = TestDSL.new
 slconfig = SLConfig.new
 slconfig.load_config(CONFIG_FILE_YAML, :YAML)
 config = slconfig.config
@@ -52,7 +53,7 @@ daemon_parameter={
 password_salt = BCrypt::Engine.generate_salt
 password_hash = BCrypt::Engine.hash_secret(config['admin']['items']['password']['value'], password_salt) #"surface"
 
-#helpers ApplicationHelper
+helpers ApplicationHelper
 
 helpers do
   
@@ -98,7 +99,7 @@ end
     end
   end
 end
-
+=begin
 get "/terminal" do
   if login? 
     haml :terminal, :locals => {:item => :terminal, :testDSL => testDSL}
@@ -118,7 +119,7 @@ post "/terminal" do
   #haml :test, :locals => {:item => :terminal}
   haml :terminal, :locals => {:item => :terminal, :testDSL => testDSL}
 end
-
+=end
 get "/daemon" do
   if login?
     haml :daemon, :locals => {:item => :daemon, :config => sldconfig, :daemon_parameter => daemon_parameter}
@@ -154,11 +155,14 @@ post "/daemon/:num" do
     
     conf['gpio_high'] = params['gpio_high'].split(",").map { |s| s.to_i }
     conf['gpio_low'] = params['gpio_low'].split(",").map { |s| s.to_i }
-    SLDConfig.save_config( sldconfig,DAEMON_CONFIG_FILE_YAML)
-    SLDConfig.save_config( sldconfig,DAEMON_CONFIG_FILE_SLD, :SLD)
-    system("cp #{DAEMON_CONFIG_FILE_SLD} /etc/sulad.conf")
+    write_unprotect(RO_ROOT, RW_REMOUNT_DIRECTORIES) do
+      SLDConfig.save_config( sldconfig,DAEMON_CONFIG_FILE_YAML)
+      SLDConfig.save_config( sldconfig,DAEMON_CONFIG_FILE_SLD, :SLD)
+    end
+    #system("cp #{DAEMON_CONFIG_FILE_SLD} /etc/sulad.conf")
+    sleep 3
     system("/etc/init.d/sulad stop")
-    sleep 1
+    sleep 10
     system("/etc/init.d/sulad start")
     redirect "/daemon"
   else 
@@ -194,13 +198,17 @@ post "/settings/:category" do
     end
   end
 =end
-  category = params['category']
-  params['category'] = nil
-  slconfig.set_categoty!(category, params)
-  slconfig.save_config(CONFIG_FILE_YAML, :YAML)
-  if category=='network'
-    SLConfig.save_network_confg(slconfig.config,"eth0",NETWORK_CONFIG_FILE)
-  end
+
+    category = params['category']
+    params['category'] = nil
+  
+    slconfig.set_categoty!(category, params)
+    write_unprotect(RO_ROOT, RW_REMOUNT_DIRECTORIES) do
+      slconfig.save_config(CONFIG_FILE_YAML, :YAML)
+      if category=='network'
+        SLConfig.save_network_confg(slconfig.config,"eth0",NETWORK_CONFIG_FILE)
+      end
+    end
   #haml :test
   redirect "/"
 end
@@ -230,6 +238,13 @@ end
 post "/reboot" do
   if login?
     session[:username] = nil
+    system( "reboot" )
+  end 
+  haml :test
+end
+
+post "/dsl_reset" do
+  if login?
     system( "reboot" )
   end 
   haml :test
@@ -395,7 +410,7 @@ __END__
           -else
             %option(value="#{stop}")=stop
     %div
-      %label(for="delay_us") delay(ms):
+      %label(for="delay_us") delay(us):
       %input(type="text" name="delay_us" value="#{port['delay_us']}")
     %div
       %label(for="delay_segment") delay segment:
