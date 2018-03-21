@@ -83,7 +83,9 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, scallback);
 	    
 	set_option(&settings, argc, argv);
-	syslog (LOG_NOTICE, "SuLa UART <=> TCP daemon started.");
+	syslog (LOG_NOTICE, "SuLa UART <=> TCP daemon started. Param %d", argc);
+	int i= argc;
+	while (i--) syslog (LOG_NOTICE, "%s", argv[i]);
 
     if ((uart_fd=uart_init(settings.uart_device, 
     						settings.uart_speed,
@@ -122,7 +124,7 @@ int main(int argc, char *argv[]) {
 	// address, will return -1 on error
 	if ((bind(__listen_sock, (struct sockaddr *)&server_address,
 	          sizeof(server_address))) < 0) {
-		syslog (LOG_ERR, "could not bind socket");
+		syslog (LOG_ERR, "could not bind socket %d", settings.tcp_port);
 		return 1;
 	}
 
