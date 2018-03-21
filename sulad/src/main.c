@@ -21,8 +21,8 @@
  * */
 volatile sig_atomic_t flag = 0;
 int __listen_sock=0;
-#define UART_RX_BUFER_SIZE 1024
-#define TCP_RX_BUFER_SIZE 1024
+#define UART_RX_BUFER_SIZE 65536
+#define TCP_RX_BUFER_SIZE 65536
 char __TCPbuffer[TCP_RX_BUFER_SIZE];
 char __UARTbuffer[UART_RX_BUFER_SIZE];
 int sock=0;
@@ -43,6 +43,7 @@ struct settings_t{
     int led_tx;                 /* параметр --event-tx-led*/
     int fd_led_tx;                 /* параметр --event-tx-led*/
     const char *pid_file;                 /* параметр --pid-file*/
+    char loop;
     char **inputFiles;          /* входные файлы */
     int numInputFiles;          /* число входных файлов */
 } settings;
@@ -65,13 +66,16 @@ void scallback(int sig){
     syslog (LOG_NOTICE, "Close thread");
     delete_pid_file(__fd_pid);
     
-    if (__child>0) {
+    if (__child==0) {
         close(sock);
         close(__listen_sock);
     }
     
     exit(0);
 }
+
+#define SEND_SEGMENT_SIZE 64
+#define SEND_SEGMENT_DELAY_US 1000
 
 int main(int argc, char *argv[]) {
 	pid_t pid;
@@ -83,9 +87,11 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, scallback);
 	    
 	set_option(&settings, argc, argv);
-	syslog (LOG_NOTICE, "SuLa UART <=> TCP daemon started. Param %d", argc);
-	int i= argc;
-	while (i--) syslog (LOG_NOTICE, "%s", argv[i]);
+	syslog (LOG_NOTICE, "SuLa UART <=> TCP daemon started.");
+	if (argc<=1){
+	    syslog (LOG_ERR, "less argc arguments");
+	    exit(-1);
+	}
 
     if ((uart_fd=uart_init(settings.uart_device, 
     						settings.uart_speed,
@@ -151,45 +157,73 @@ int main(int argc, char *argv[]) {
 			syslog (LOG_ERR, "could not open a socket to accept data");
 			return 1;
 		}
-
+        __child=0;
 		int n = 0;
 
 		/*printf("client connected with ip address: %s\n",
 		       inet_ntoa(client_address.sin_addr));*/
 		syslog (LOG_NOTICE, ("client connected with ip address: %s",
 		                                    inet_ntoa(client_address.sin_addr)));
-		//printf("fffooorking....\n");
-		switch(pid=fork()){
-			case -1: syslog (LOG_ERR, "fork"); /* произошла ошибка */
-        			 exit(1); /*выход из родительского процесса*/
-        	case 0: //printf("fork i am here!!!\n");
-        	        __child=1;
-        	        if ((__fd_pid = create_pid_file(settings.pid_file, getpid()))<0){
-					    syslog (LOG_ERR, "child not create pid file %d",pid);
-					};
-        			while ((n = read(uart_fd, __UARTbuffer, UART_RX_BUFER_SIZE)) > 0) {
-        				//__UARTbuffer[n]=0;
-						//printf("UART received: %s", __UARTbuffer);
-						// echo received content back
-						if (send(sock, __UARTbuffer, n, 0)<0){
-							syslog (LOG_ERR, "tcp send error: %s", strerror(errno));
-						} else event_rx_led(&settings);
-					}
-					break;
-			default: //printf("Parent here!!!\n");
-					// keep running as long as the client keeps the connection open
-                     __child=0;
-					while ((n = recv(sock, __TCPbuffer, TCP_RX_BUFER_SIZE, 0)) > 0) {
-						//__TCPbuffer[n]=0;
-						//printf("TCP received: %s", __TCPbuffer);
-						// echo received content back
-						//send(sock, __TCPbuffer, n, 0);
-						if (write(uart_fd,__TCPbuffer,n)<0){
-							syslog (LOG_ERR, "uart write error: %s", strerror(errno));
-						} else event_tx_led(&settings);
-					} 
+		if(settings.loop=='l'){
+		    // Local loop
+		    __child=0;
+    	    while ((n = recv(sock, __TCPbuffer, TCP_RX_BUFER_SIZE, 0)) > 0) {
+				event_tx_led(&settings);
+                if (send(sock, __TCPbuffer, n, 0)<0){
+    			    syslog (LOG_ERR, "tcp send error: %s", strerror(errno));
+    			} else event_rx_led(&settings);
+			} 
+		} else if (settings.loop=='r'){
+		    // Remote loop
+		    
 		}
-        kill(pid, SIGTERM);
+		else{
+		    switch(pid=fork()){
+    			case -1: syslog (LOG_ERR, "fork"); /* произошла ошибка */
+            			 exit(1); /*выход из родительского процесса*/
+            	case 0: //printf("fork i am here!!!\n");
+            	        __child=1;
+            	        if ((__fd_pid = create_pid_file(settings.pid_file, getpid()))<0){
+    					    syslog (LOG_ERR, "child not create pid file %d",pid);
+    					};
+            			while (true) {
+    						if ((n = read(uart_fd, __UARTbuffer, UART_RX_BUFER_SIZE)) <= 0){
+    						    syslog (LOG_ERR, "uart receive error: %s", strerror(errno));
+    						}
+    						if (send(sock, __UARTbuffer, n, 0)<0){
+    							syslog (LOG_ERR, "tcp send error: %s", strerror(errno));
+    						} else event_rx_led(&settings);
+    					}
+    					break;
+    			default: //printf("Parent here!!!\n");
+    					// keep running as long as the client keeps the connection open
+                        __child=0;
+    					while ((n = recv(sock, __TCPbuffer, TCP_RX_BUFER_SIZE, 0)) > 0) {
+    					    
+    						/*if (write(uart_fd,__TCPbuffer,n)<0){
+    							syslog (LOG_ERR, "uart write error: %s", strerror(errno));
+    						} else event_tx_led(&settings);*/
+    						int i=0;
+    						/*while (i<n){
+    						    usleep(10);
+    						    if (write(uart_fd,__TCPbuffer+i,1)<0){
+    							    syslog (LOG_ERR, "uart write error: %s", strerror(errno));
+    						    } else event_tx_led(&settings);
+    						    i++;
+    						}*/
+    						
+    						while (i<n){
+    						    if (write(uart_fd,__TCPbuffer+i, i+SEND_SEGMENT_SIZE<n ? SEND_SEGMENT_SIZE : n-i)<0){
+    							    syslog (LOG_ERR, "uart write error: %s", strerror(errno));
+    						    } else event_tx_led(&settings);
+    						    i+=SEND_SEGMENT_SIZE;
+    						    usleep(SEND_SEGMENT_DELAY_US);
+    						}
+					   } 
+		    }   
+		    if (__child==0) kill(pid, SIGTERM);
+		}
+        
 		close(sock);
 	}
 
@@ -262,6 +296,8 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
         { "device", required_argument, NULL, 'D' },
         { "baudrate", required_argument, NULL, 'S' },
         { "tcp-port", required_argument, NULL, 'P'},
+        { "loop-local", no_argument, NULL, 0 },
+        { "loop-remote", no_argument, NULL, 0 },
         { "help", no_argument, NULL, 'h' },
         { NULL, 0, NULL, 0 }
     };
@@ -274,6 +310,7 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
     settings->tcp_port=9988; 							/* параметр -P */
     settings->led_rx=settings->led_tx = -1;     /* led not change */
     settings->fd_led_rx=settings->fd_led_tx = -1;     /* led not change */
+    settings->loop=0;
     settings->inputFiles=NULL;         			/* входные файлы */
     settings->numInputFiles=0;        				/* число входных файлов */
     
@@ -344,6 +381,12 @@ int set_option(struct settings_t *settings, int argc, char *argv[]){
                         gpio_out_write(fd_gpio, 0);
                         syslog (LOG_ERR, "low gpio %d", gpio);
                     } else syslog (LOG_ERR, "could not gpio permit out gpio(%d)",settings->led_tx);
+                }
+                else if(strcmp( "loop-local", longOpts[longIndex].name ) == 0){
+                    settings->loop = 'l';
+                }
+                else if(strcmp( "loop-remote", longOpts[longIndex].name ) == 0){
+                    settings->loop = 'r';
                 }
                 break;
                  

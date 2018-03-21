@@ -32,12 +32,14 @@ clean:
 
 .PHONY: install
 install: $(PROG_NAME)
+	$(DESTDIR)$(INITDDIR)/$(PROG_NAME) stop
 	mkdir -p $(DESTDIR)$(INSTALL_PREFIX)/bin
 	cp $< $(DESTDIR)$(INSTALL_PREFIX)/bin/$(PROG_NAME)
 	cp conf/initd.sh $(DESTDIR)$(INITDDIR)/$(PROG_NAME)
 	chmod 755 $(DESTDIR)$(INITDDIR)/$(PROG_NAME)
 	cp conf/config $(DESTDIR)/etc/$(PROG_NAME).conf
 	update-rc.d $(PROG_NAME) defaults
+	$(DESTDIR)$(INITDDIR)/$(PROG_NAME) start
 
 .PHONY: uninstall
 uninstall:
