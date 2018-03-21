@@ -3,14 +3,11 @@ module Surfacelab
     BBIF = {
         :GPIO => {
                     :DSL_RESET => { :bbpin => :P8_7 , :bbmode => :OUT, :active => :low },
-                    :DSL_MASTER => { :bbpin => :P8_8 , :bbmode => :OUT, :active => :low },
                     :DSL_LINKUP => {:bbpin => :P8_11, :bbmode => :IN, :bbpullmode => :PULLDOWN, :active => :high},
-        
-                    :DSL_NRDY => {:bbpin => :P9_42, :bbmode => :IN, :bbpullmode => :PULLUP, :active => :low},
                     :DSL_IRQ => {:bbpin => :P8_12, :bbmode => :IN, :bbpullmode => :PULLUP, :active => :low},
                     
                     :DSL_MODE0 => { :bbpin => :P9_28 , :bbmode => :OUT, :active => :low },
-                    :DSL_MODE1 => { :bbpin => :P8_31 , :bbmode => :OUT, :active => :low },
+                    :DSL_MODE1 => { :bbpin => :P9_31 , :bbmode => :OUT, :active => :low },
                     
                     :DSL_CUART_CTS => {:bbpin => :P8_31, :bbmode => :IN, :bbpullmode => :PULLDOWN, :active => :low},
                     :DSL_CUART_RTS => {:bbpin => :P8_32, :bbmode => :OUT, :active => :high},
@@ -36,7 +33,7 @@ module Surfacelab
         :UART =>{
                     :MCU_UART_DEPTH_BOOT => {:bbuart => :UART4, :bbspeed => 19200, :bbparity => :EVEN},
                     :MCU_UART_DEPTH_EXTERN => {:bbuart => :UART1, :bbspeed => 19200},
-                    :MCU_UART_DSL_DATA => {:bbuart => :UART2, :bbspeed => 115200},
+                    :MCU_UART_DSL_DATA => {:bbuart => :UART2, :bbspeed => 1500000},
                     :MCU_UART_DSL_CONFIG => {:bbuart => :UART5, :bbspeed => 19200},
         }
     }.freeze

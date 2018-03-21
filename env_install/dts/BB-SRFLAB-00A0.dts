@@ -25,12 +25,8 @@
         
         /* DSL GPIO Pins*/
         "P8.7", /* DSL RESET OUT PIN */
-        "P8.8", /* DSL MASTER/SLAVE OUT PIN */
-        "P8.9", /* DSL COT/RTA IN PIN (RESERVED)*/
-        "P8.10", /* DSL SP0 IN PIN (RESERVED) */
         "P8.11", /* DSL LINK IN PIN */
         "P8.12", /* DSL IRQ IN PIN */
-        "P9.42", /* DSL NRDY IN PIN */
         "P9.28", /* DSL BAUD[0] */
         "P9.31", /* DSL BAUD[1] */
         
@@ -86,12 +82,8 @@
 		            dsl_gpio: pinmux_dsl_gpio {
 		                pinctrl-single,pins = <
                             0x090 0x47  // "P8.7", /* DSL RESET OUT PIN */ pulldown
-                            0x094 0x57  // "P8.8", /* DSL MASTER/SLAVE OUT PIN */ pulldown
-                            0x09C 0x4F  // "P8.9", /* DSL COT/RTA IN PIN (RESERVED)*/
-                            0x098 0x4F  // "P8.10", /* DSL SP0 IN PIN (RESERVED) */
                             0x034 0x67  // "P8.11", /* DSL LINK IN PIN */ pulldown
                             0x030 0x77  // "P8.12", /* DSL IRQ IN PIN */ pullup
-                            0x164 0x77  // "P9.42", /* DSL NRDY IN PIN */ pullup
                             
                             0x19c 0x6F      /*"P9.28", DSL BAUD[0], OUTPUT*/
                             0x190 0x6F      /*"P9.31", DSL BAUD[1], OUTPUT*/

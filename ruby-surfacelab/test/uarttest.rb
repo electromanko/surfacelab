@@ -4,7 +4,7 @@ include Beaglebone
 include Surfacelab
 
 callback = lambda { |uart, data, count| puts "#{data}" }
-callback2 = lambda { |uart, data, count| puts "Data: #{data}" }
+callback2 = lambda { |uart, data, count| puts "#{uart}:#{data}" }
 
 #p8_43 = GPIOPin.new(:P8_43, :IN, :PULLUP, :FAST)
 
@@ -32,7 +32,7 @@ puts sl.devhash
 uart_data = sl.devhash[:UART][:MCU_UART_DSL_DATA]
 uart_data.run_on_each_line(callback2)
 
-#begin
+=begin
 uart_conf = sl.devhash[:UART][:MCU_UART_DSL_CONFIG]
 uart_conf.run_on_each_line(callback)
 sleep 0.1
@@ -40,14 +40,15 @@ uart_conf.writeln("\r\n")
 uart_conf.writeln("config show\r\n")                             
 #uart4.each_line { |line| puts line }
 gets
-#end
-
-
+=end
 
 puts "LINKUP: #{sl.devhash[:GPIO][:DSL_LINKUP].digital_read}"
 
+sl.devhash[:GPIO][:DSL_MODE0].digital_write(:HIGH)
+sl.devhash[:GPIO][:DSL_MODE1].digital_write(:HIGH)
+
 for i in 0..10000
-    uart_data.writeln("byte: #{i}") 
+    uart_data.write("byte: #{i}\n")
     sleep 2
 end
 
