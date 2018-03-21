@@ -171,6 +171,10 @@ post "/speed_change" do
       system("echo \"-D /dev/ttyO2 -S 115200 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-low 110 --gpio-low 113\" >> /etc/sulad.conf")
     when "1500000"
       system("echo \"-D /dev/ttyO2 -S 1500000 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-high 110 --gpio-high 113\" >> /etc/sulad.conf")
+    when "576000"
+      system("echo \"-D /dev/ttyO2 -S 576000 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-low 110 --gpio-high 113\" >> /etc/sulad.conf")
+    when "1152000"
+      system("echo \"-D /dev/ttyO2 -S 1152000 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-high 110 --gpio-low 113\" >> /etc/sulad.conf")
   end
   sleep 1
   system("/etc/init.d/sulad stop")
@@ -271,6 +275,8 @@ __END__
   %input(type="submit" value="Reboot")
 %form(action="/speed_change" method="post")
   %input(type="radio" name="speed" value="115200") 115200
+  %input(type="radio" name="speed" value="576000") 576000
+  %input(type="radio" name="speed" value="1152000") 1152000
   %input(type="radio" name="speed" value="1500000") 1500000
   %input(type="submit" value="Change")
 @@terminal
