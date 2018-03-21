@@ -163,6 +163,22 @@ post "/reboot" do
   haml :test
 end
 
+post "/speed_change" do
+  
+  system("echo \"-D /dev/ttyO5 -S 19200 -P 8898 --segment-delay 2000 --event-rx-led 70 --event-tx-led 71\" > /etc/sulad.conf")
+  case params["speed"]
+    when "115200"
+      system("echo \"-D /dev/ttyO2 -S 115200 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-low 110 --gpio-low 113\" >> /etc/sulad.conf")
+    when "1500000"
+      system("echo \"-D /dev/ttyO2 -S 1500000 -P 8899 -s 2 --event-rx-led 72 --event-tx-led 73 --gpio-high 110 --gpio-high 113\" >> /etc/sulad.conf")
+  end
+  sleep 1
+  system("/etc/init.d/sulad stop")
+  sleep 3
+  system("/etc/init.d/sulad start")
+  haml :test, :locals => {:item => :terminal}
+end
+
 # style="text-align:center"
 
 __END__
@@ -253,6 +269,10 @@ __END__
   %input(type="submit" value="Poweoff")
 %form(action="/reboot" method="post")    
   %input(type="submit" value="Reboot")
+%form(action="/speed_change" method="post")
+  %input(type="radio" name="speed" value="115200") 115200
+  %input(type="radio" name="speed" value="1500000") 1500000
+  %input(type="submit" value="Change")
 @@terminal
 %h1 IO terminal
 %form(action="/terminal" method="post")
