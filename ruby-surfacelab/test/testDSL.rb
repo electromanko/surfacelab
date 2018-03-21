@@ -24,7 +24,7 @@ class TestDSL
             else
                     @thrRecvLoop = Thread.new {
                         while true do
-                            sp.write(sp.getc)
+                            @serialport.write(@serialport.getc)
                         end
                     }
                     @status="looped"
@@ -37,7 +37,7 @@ class TestDSL
             
             @status="stoped"
         elsif @status == "looped"
-            @thrRecvLoop.join
+            @thrRecvLoop.exit
             @thrRecvLoop=nil
             @status="stoped"
         end

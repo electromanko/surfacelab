@@ -91,7 +91,7 @@ post "/terminal" do
   if params[:action] == "Start"
     testDSL.start(params[:size]) unless params[:size].nil?
   elsif params[:action] == "Loop"
-    testDSL.start(params[:size])
+    testDSL.start(0, true)
   else
     testDSL.stop
   end
@@ -266,16 +266,21 @@ __END__
   %div
     -if testDSL.status =="started"
       %input(type="submit" name="action" value="Start" disabled)
-    -else
-      %input(type="submit" name="action" value="Start")
-    -if testDSL.status == "stoped"
-      %input(type="submit" name="action" value="Stop" disabled)
-    -else
       %input(type="submit" name="action" value="Stop")
-    -if testDSL.status == "looped"
+      %input(type="submit" name="action" value="Loop" disabled)
+    -elsif testDSL.status == "stoped"
+      %input(type="submit" name="action" value="Start")
+      %input(type="submit" name="action" value="Stop" disabled)
+      %input(type="submit" name="action" value="Loop")
+    -elsif  testDSL.status == "looped"
+      %input(type="submit" name="action" value="Start" disabled)
+      %input(type="submit" name="action" value="Stop")
       %input(type="submit" name="action" value="Loop" disabled)
     -else
-      %input(type="submit" name="action" value="Loop")
+      %input(type="submit" name="action" value="Start" disabled)
+      %input(type="submit" name="action" value="Stop" disabled)
+      %input(type="submit" name="action" value="Loop" disabled)
+    %p= testDSL.status
   %div
     
 @@login
