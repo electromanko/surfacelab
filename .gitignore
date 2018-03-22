@@ -3,3 +3,5 @@ Gemfile.lock
 ruby-surfacelab/web/log/
 *.dtbo
 ruby-surfacelab/web/tmp/
+sulad/obj/
+sulad/sulad

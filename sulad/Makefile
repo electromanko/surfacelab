@@ -17,7 +17,7 @@ OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 $(ODIR)/%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-slcomD: $(OBJ)
+sulad: $(OBJ)
 	gcc -o $@ $^ $(CFLAGS) $(LIBS)
 
 .PHONY: clean

@@ -5,10 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <syslog.h>
 
 /* baudrate settings are defined in <asm/termbits.h>, which is
 included by <termios.h> */
-#define BAUDRATE B38400            
+#define BAUDRATE B1500000            
 /* change this definition for the correct port */
 #define MODEMDEVICE "/dev/ttyO2"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -18,16 +19,19 @@ included by <termios.h> */
 
 volatile int STOP=FALSE; 
 
-int uart_init(){
+int uart_init(char* device, long int baud_rate, unsigned char ncharb, char parity, unsigned char nstopb){
 int fd,c, res;
   struct termios oldtio,newtio;
-  //char buf[255];
 /* 
   Open modem device for reading and writing and not as controlling tty
   because we don't want to get killed if linenoise sends CTRL-C.
 */
- fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY ); 
- if (fd <0) {perror(MODEMDEVICE); exit(-1); }
+ fd = open(device, O_RDWR | O_NOCTTY ); 
+ if (fd <0) {
+     return -1; 
+     perror(MODEMDEVICE); 
+     exit(-1);
+ }
 
  tcgetattr(fd,&oldtio); /* save current serial port settings */
  bzero(&newtio, sizeof(newtio)); /* clear struct for new port settings */
@@ -40,7 +44,28 @@ int fd,c, res;
   CLOCAL  : local connection, no modem contol
   CREAD   : enable receiving characters
 */
- newtio.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
+
+ newtio.c_cflag = CLOCAL | CREAD;
+ 
+ if (cfsetspeed (&newtio, (speed_t) baud_rate)<0) return -1;
+ 
+ /* Change bit per char*/
+ if (ncharb==8) newtio.c_cflag |= CS8;
+ else if (ncharb==7) newtio.c_cflag |= CS7;
+ else if (ncharb==6) newtio.c_cflag |= CS6;
+ else if (ncharb==5) newtio.c_cflag |= CS5;
+ else return -1;
+ 
+ /* Parity bit */
+ if (parity=='n') {}
+ else if (parity=='o') newtio.c_cflag |= PARENB | PARODD;
+ else if (parity=='e') newtio.c_cflag |= PARENB;
+ else return -1;
+ 
+ /* Stop bits */
+ if (nstopb=1) {}
+ else if (nstopb=2) newtio.c_cflag |= CSTOPB;
+ else return -1;
  
 /*
   IGNPAR  : ignore bytes with parity errors
@@ -48,7 +73,8 @@ int fd,c, res;
             will not terminate input)
   otherwise make device raw (no other input processing)
 */
- newtio.c_iflag = IGNPAR | ICRNL;
+ //newtio.c_iflag = IGNPAR;
+ newtio.c_iflag = IGNPAR;
  
 /*
  Raw output.
@@ -59,7 +85,7 @@ int fd,c, res;
   ICANON  : enable canonical input
   disable all echo functionality, and don't send signals to calling program
 */
- newtio.c_lflag = ICANON;
+ //newtio.c_lflag = ICANON;
  
 /* 
   initialize all control characters 
@@ -97,3 +123,4 @@ int fd,c, res;
 */
 return fd;
 }
+
